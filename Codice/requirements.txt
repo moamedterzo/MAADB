@@ -1,0 +1,3 @@
+python-magic==0.4.13
+json-rpc==1.13.0
+pyodbc==4.0.30
