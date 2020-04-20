@@ -25,7 +25,6 @@ def load_emojii_emoticon(conn, cursor):
     for emoticon in OthersEmoji:
         emojii_emoticon_documents.append({"Code": emoticon, "Polarity": 0})
 
-    cursor.execute("delete from Emoticon")
     for emojicon in emojii_emoticon_documents:
         cursor.execute("insert into Emoticon(Code, Polarity) values ('" + emojicon['Code'].replace("'", "''") + "', " + str(emojicon['Polarity']) + ")")
 
@@ -73,12 +72,8 @@ def load_tweet(conn, cursor):
     cursor.execute('delete from Tweet')
     conn.commit()
 
-    command = ''
-
     sql_insert = "insert into Tweet(Text, Emotion) VALUES (?, ?)"
     params = []
-
-
 
     for filename in os.listdir(path_tweet):
 
@@ -89,18 +84,16 @@ def load_tweet(conn, cursor):
             while line != '':
 
                 params.append((line.replace("'", "''"), emotion))
-                #command += "insert into Tweet(Text, Emotion) values ('" + line.replace("'",
-                 #                                                                      "''") + "', '" + emotion + "')\n"
                 line = reader.readline()
 
     print('Inserting tweets...')
-    #cursor.execute(command)
     cursor.executemany(sql_insert, params)
     conn.commit()
     print('Tweets inserted!')
 
 
 def initialise_database():
+    # todo prendere info da settings
     conn = pyodbc.connect("Driver={SQL Server Native Client 11.0};"
                           "Server=localhost\SQLEXPRESS;"
                           "Database=TwitterEmotions;"
@@ -114,7 +107,7 @@ def initialise_database():
         load_slang(conn, cursor)
         load_stopwords(conn, cursor)
         load_emojii_emoticon(conn, cursor)
-        #load_tweet(conn, cursor)
+        load_tweet(conn, cursor)
 
         cursor.close()
         conn.close()
