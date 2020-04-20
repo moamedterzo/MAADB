@@ -1,6 +1,7 @@
 import requests
 import json
-
+import argparse
+import loadMongoDBResources, loadSQLResources
 
 def main():
     url = "http://localhost:4000/jsonrpc"
@@ -17,20 +18,22 @@ def main():
     print(response)
 
 
-def provesql():
-    import pyodbc
-    cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};"
-                          "Server=DESKTOP-D62CNUA\SQLEXPRESS01;"
-                          "Database=TwitterEmotions;"
-                          "Trusted_Connection=yes;")
-
-    cursor = cnxn.cursor()
-    cursor.execute('SELECT * FROM Slang')
-
-    for row in cursor:
-        print('row = %r' % (row,))
-
-
 
 if __name__ == "__main__":
-    main()
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--initialize-databases', help='Initialize databases with default data', default=False)
+    parser.add_argument('--execute-operation', help='', default=False)
+    args = parser.parse_args()
+
+    if args.initialize_databases:
+        print('Initializing mongoDB cluster')
+        loadMongoDBResources.initialise_cluster()
+
+        print('Initializing relational db')
+        #loadSQLResources.initialise_database()
+
+        print('Initialization finished')
+
+    if args.execute_operation:
+        print('stocazzo')
