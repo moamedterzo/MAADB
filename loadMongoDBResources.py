@@ -8,7 +8,7 @@ from slang_emojii_emoticon_stopwords import slang, stop_words, pos_emoticons, ne
 # from nltk.corpus import stopwords
 # sw = stopwords.words("english")
 
-numberOfClusters = 2
+numberOfClusters= 2
 client = pymongo.MongoClient('localhost', 27017)
 path_tweet = 'Risorse\Twitter messaggi'
 path_negative_word = "Risorse\elenco-parole-che-negano-parole-successive.txt"
@@ -88,8 +88,8 @@ def load_tweet():
 
 
 
-load_tweet()
-load_negative_word()
-load_slang()
-load_stopwords()
-load_emojii_emoticon()
+#load_tweet()
+#load_negative_word()
+#load_slang()
+#load_stopwords()
+#load_emojii_emoticon()
