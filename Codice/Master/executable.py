@@ -1,39 +1,77 @@
 import requests
 import json
 import argparse
-import loadMongoDBResources, loadSQLResources
+import loadMongoDBResources, loadSQLResources, slave_application
 
-def main():
-    url = "http://localhost:4000/jsonrpc"
 
-    # Example echo method
-    payload = {
-        "method": "diocane",
-        "params": ["cane!"],
-        "jsonrpc": "2.0",
-        "id": 0,
-    }
+def mongodb_mapreduce(setting_data):
 
-    response = requests.post(url, json=payload).json()
-    print(response)
+    for slave_setting_data in setting_data['MongoDB']['SlaveNodes']:
 
+        url = "http://" + slave_setting_data['Address'] + ":" + str(slave_setting_data['ServicePort']) + "/jsonrpc"
+
+        payload = {
+            "method": "diocane",
+            "params": ["cane!"],
+            "jsonrpc": "2.0",
+            "id": 0,
+        }
+
+        response = requests.post(url, json=payload).json()
+        print("Risposta dal nodo con porta: " + str(slave_setting_data['ServicePort']))
+        print(response)
+        print()
 
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--initialize-databases', help='Initialize databases with default data', default=False)
-    parser.add_argument('--execute-operation', help='', default=False)
+
+    parser.add_argument('--database-type', help='Type of database: M = mongoDB, S = SqlServer')
+    parser.add_argument('--mongodb-nodetype', help='Type of node: M = master, S = slave')
+    parser.add_argument('--mongodb-slave-number', help='Number of slave node')
+
     args = parser.parse_args()
 
-    if args.initialize_databases:
-        print('Initializing mongoDB cluster')
-        loadMongoDBResources.initialise_cluster()
+    #lettura file setting
+    with open('setting.json') as json_file:
+        setting_data = json.load(json_file)
 
-        print('Initializing relational db')
-        #loadSQLResources.initialise_database()
+    if args.database_type == "S" or (args.database_type == "M" and args.mongodb_nodetype == "M"):
 
-        print('Initialization finished')
+        selectedOperation = ""
+        while selectedOperation != "-1":
+            print("\nSelect operation to do:")
+            print("\t1 to initialize database")
+            print("\t2 to run Twitter analisys")
+            print("\t-1 to exit")
 
-    if args.execute_operation:
-        print('stocazzo')
+            selectedOperation = input()
+
+            if selectedOperation == "1":
+
+                #inizializzazione database
+                if args.database_type == "S":
+                    loadSQLResources.initialise_database()
+                elif args.database_type == "M":
+                    loadMongoDBResources.initialise_cluster()
+                print('Initialization completed!')
+
+            elif selectedOperation == "2":
+                if args.database_type == "S":
+                    print("Niente ancora")
+                elif args.database_type == "M":
+                    mongodb_mapreduce(setting_data)
+
+
+    elif args.database_type == "M" and args.mongodb_nodetype == "S":
+
+        #se sono slave, avvio il servizio che rimane in ascolto di eventuali richieste
+        slave_number = int(args.mongodb_slave_number)
+        slave_setting_data = setting_data['MongoDB']['SlaveNodes'][slave_number]
+
+        slave_application.start_slave_application(slave_setting_data['ServicePort'],
+                                                  slave_setting_data['Address'],
+                                                  slave_setting_data['DBPort'])
+
+
