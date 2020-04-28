@@ -10,7 +10,7 @@ client = None
 
 def porcodio(s):
 
-    return dumps(client['TwitterEmotionsSlave'].Slang.find({}).limit(10))
+    return dumps(client['TwitterEmotions'].Tweet.find({}).limit(10))
 
 @Request.application
 def main_application(request):
@@ -21,9 +21,9 @@ def main_application(request):
     return Response(response.json, mimetype='application/json')
 
 
-def start_slave_application(port, dbaddress, dbport):
+def start_slave_application(service_port, dbaddress, dbport):
 
     global client
     client = pymongo.MongoClient(dbaddress, dbport)
 
-    run_simple('localhost', port, main_application)
+    run_simple('localhost', service_port, main_application)

@@ -2,7 +2,8 @@ import requests
 import json
 import argparse
 import loadMongoDBResources, loadSQLResources, slave_application
-
+import pymongo
+from bson.json_util import dumps
 
 from bson.py3compat import abc, string_type, PY3, text_type
 
@@ -87,7 +88,7 @@ def try_mapreduce():
 
     import pymongo
     client = pymongo.MongoClient("localhost", 27019)
-    db = client['TwitterEmotionsSlave']
+    db = client['TwitterEmotions']
 
     db.my_result.delete_many({})
 
@@ -113,7 +114,7 @@ def try_mapreduce():
 
 def mongodb_mapreduce(setting_data):
 
-    for slave_setting_data in setting_data['MongoDB']['SlaveNodes']:
+    for slave_setting_data in setting_data['MongoDB']['SecondaryNodes']:
 
         url = "http://" + slave_setting_data['Address'] + ":" + str(slave_setting_data['ServicePort']) + "/jsonrpc"
 
@@ -129,18 +130,23 @@ def mongodb_mapreduce(setting_data):
         print(response)
         print()
 
+    #primary node
+    primary_setting_data = setting_data['MongoDB']['PrimaryNode']
+    client = pymongo.MongoClient(primary_setting_data['Address'], primary_setting_data['DBPort'])
+    response = dumps(client['TwitterEmotions'].Tweet.find({}).limit(10))
+    print("Risposta dal nodo PRIMARIO")
+    print(response)
+    print()
+
+
 
 if __name__ == "__main__":
-
-
-    try_mapreduce()
-
 
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--database-type', help='Type of database: M = mongoDB, S = SqlServer')
-    parser.add_argument('--mongodb-nodetype', help='Type of node: M = master, S = slave')
-    parser.add_argument('--mongodb-slave-number', help='Number of slave node')
+    parser.add_argument('--mongodb-nodetype', help='Type of node: P = primary, S = secondary')
+    parser.add_argument('--mongodb-secondary-index', help='Secondary node index')
 
     args = parser.parse_args()
 
@@ -148,7 +154,7 @@ if __name__ == "__main__":
     with open('setting.json') as json_file:
         setting_data = json.load(json_file)
 
-    if args.database_type == "S" or (args.database_type == "M" and args.mongodb_nodetype == "M"):
+    if args.database_type == "S" or (args.database_type == "M" and args.mongodb_nodetype == "P"):
 
         selectedOperation = ""
         while selectedOperation != "-1":
@@ -165,7 +171,7 @@ if __name__ == "__main__":
                 if args.database_type == "S":
                     loadSQLResources.initialise_database()
                 elif args.database_type == "M":
-                    loadMongoDBResources.initialise_cluster()
+                    loadMongoDBResources.initialise_cluster(setting_data['MongoDB']["Mongos_client"])
                 print('Initialization completed!')
 
             elif selectedOperation == "2":
@@ -177,9 +183,9 @@ if __name__ == "__main__":
 
     elif args.database_type == "M" and args.mongodb_nodetype == "S":
 
-        #se sono slave, avvio il servizio che rimane in ascolto di eventuali richieste
-        slave_number = int(args.mongodb_slave_number)
-        slave_setting_data = setting_data['MongoDB']['SlaveNodes'][slave_number]
+        #se sono secondary, avvio il servizio che rimane in ascolto di eventuali richieste
+        secondary_index = int(args.mongodb_secondary_index)
+        slave_setting_data = setting_data['MongoDB']['SecondaryNodes'][secondary_index]
 
         slave_application.start_slave_application(slave_setting_data['ServicePort'],
                                                   slave_setting_data['Address'],

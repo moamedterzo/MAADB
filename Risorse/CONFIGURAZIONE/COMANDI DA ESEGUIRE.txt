@@ -1,0 +1,61 @@
+sc.exe create MongoDBConfigServer binPath= "\"C:\Program Files\MongoDB\Server\4.2\bin\mongod.exe\" --service --config=\"C:\Program Files\MongoDB\Server\4.2\bin\mongod_twitter_config_server.cfg\"" DisplayName= "MongoDBConfigServer" start= "auto"
+sc.exe create MongoDBShard1 binPath= "\"C:\Program Files\MongoDB\Server\4.2\bin\mongod.exe\" --service --config=\"C:\Program Files\MongoDB\Server\4.2\bin\mongod_twitter_shard_server1.cfg\"" DisplayName= "MongoDBShard1" start= "auto"
+sc.exe create MongoDBShard2 binPath= "\"C:\Program Files\MongoDB\Server\4.2\bin\mongod.exe\" --service --config=\"C:\Program Files\MongoDB\Server\4.2\bin\mongod_twitter_shard_server2.cfg\"" DisplayName= "MongoDBShard2" start= "auto"
+sc.exe create MongoDBShard3 binPath= "\"C:\Program Files\MongoDB\Server\4.2\bin\mongod.exe\" --service --config=\"C:\Program Files\MongoDB\Server\4.2\bin\mongod_twitter_shard_server3.cfg\"" DisplayName= "MongoDBShard3" start= "auto"
+sc.exe create MongoDBRouter binPath= "\"C:\Program Files\MongoDB\Server\4.2\bin\mongos.exe\" --service --config=\"C:\Program Files\MongoDB\Server\4.2\bin\mongos_twitter.cfg\"" DisplayName= "MongoDBRouter" start= "auto"
+
+
+mongo --host localhost --port 27018
+rs.initiate(
+  {
+    _id: "TwitterConfigServer",
+    configsvr: true,
+    members: [
+      { _id : 0, host : "localhost:27018" }
+    ]
+  }
+)
+
+mongo --host localhost --port 27019
+rs.initiate(
+  {
+    _id: "TwitterShard1",
+    members: [
+      { _id : 0, host : "localhost:27019" }
+    ]
+  }
+)
+
+
+mongo --host localhost --port 27020
+rs.initiate(
+  {
+    _id: "TwitterShard2",
+    members: [
+      { _id : 0, host : "localhost:27020" }
+    ]
+  }
+)
+
+mongo --host localhost --port 27021
+rs.initiate(
+  {
+    _id: "TwitterShard3",
+    members: [
+      { _id : 0, host : "localhost:27021" }
+    ]
+  }
+)
+
+
+mongo --host localhost --port 27017
+sh.addShard("TwitterShard1/localhost:27019")
+sh.addShard("TwitterShard2/localhost:27020")
+sh.addShard("TwitterShard3/localhost:27021")
+
+sh.enableSharding("TwitterEmotions")
+db.adminCommand( { movePrimary: "TwitterEmotions", to: "TwitterShard1" } )
+sh.shardCollection("TwitterEmotions.Tweet", { _id : "hashed" })
+
+
+
