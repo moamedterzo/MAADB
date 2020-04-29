@@ -8,14 +8,15 @@ from bson.json_util import dumps
 
 client = None
 
-def porcodio(s):
+def preprocess_tweets(s):
 
-    return dumps(client['TwitterEmotions'].Tweet.find({}).limit(10))
+    #main(client)
+    return dumps("ok")
 
 @Request.application
 def main_application(request):
 
-    dispatcher["diocane"] = porcodio
+    dispatcher["preprocess_tweets"] = preprocess_tweets
 
     response = JSONRPCResponseManager.handle(request.data, dispatcher)
     return Response(response.json, mimetype='application/json')

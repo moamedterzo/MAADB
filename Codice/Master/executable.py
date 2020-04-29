@@ -119,8 +119,8 @@ def mongodb_mapreduce(setting_data):
         url = "http://" + slave_setting_data['Address'] + ":" + str(slave_setting_data['ServicePort']) + "/jsonrpc"
 
         payload = {
-            "method": "diocane",
-            "params": ["cane!"],
+            "method": "preprocess_tweets",
+            "params": [""],
             "jsonrpc": "2.0",
             "id": 0,
         }
@@ -133,6 +133,8 @@ def mongodb_mapreduce(setting_data):
     #primary node
     primary_setting_data = setting_data['MongoDB']['PrimaryNode']
     client = pymongo.MongoClient(primary_setting_data['Address'], primary_setting_data['DBPort'])
+    #main(client)
+
     response = dumps(client['TwitterEmotions'].Tweet.find({}).limit(10))
     print("Risposta dal nodo PRIMARIO")
     print(response)
