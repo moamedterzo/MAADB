@@ -1,12 +1,29 @@
+import json
+import re
 import pymongo
-from nltk.stem import PorterStemmer
 from Codice.Master.slang_emojii_emoticon_stopwords import punctuations
 from nltk.stem import WordNetLemmatizer
+from bson.code import Code
 
-client_slaves = [
-    pymongo.MongoClient('localhost', 27019),
-    pymongo.MongoClient('localhost', 27020),
-]
+client_master = None
+db = None
+
+'''
+CODICE SOLUZIONE PRECEDENTE
+
+hashtag_map = {"anger": defaultdict(int), "anticipation": defaultdict(int), "disgust": defaultdict(int),
+               "fear": defaultdict(int), "joy": defaultdict(int), "sadness": defaultdict(int),
+               "surprise": defaultdict(int),
+               "trust": defaultdict(int)}
+emoji_map = {"anger": defaultdict(int), "anticipation": defaultdict(int), "disgust": defaultdict(int),
+             "fear": defaultdict(int), "joy": defaultdict(int), "sadness": defaultdict(int),
+             "surprise": defaultdict(int),
+             "trust": defaultdict(int)}
+emotion_words_map = {"anger": defaultdict(int), "anticipation": defaultdict(int), "disgust": defaultdict(int),
+                     "fear": defaultdict(int), "joy": defaultdict(int), "sadness": defaultdict(int),
+                     "surprise": defaultdict(int),
+                     "trust": defaultdict(int)}
+'''
 
 
 def remove_nick_and_url(line):
@@ -62,24 +79,51 @@ def delete_stopwords(line, stop_word_list):
     return line
 
 
-def clean_tweet(line, emoticon_list, slang_dict, stop_word_list):
+def clean_tweet(line, emotion, emoticon_list, slang_dict, stop_word_list, emotion_words):
+    '''
+    CODICE SOLUZIONE PRECEDENTE
+
+    for words in line.split():
+        if words.startswith('#') and words != '#':
+            hashtag_map[emotion][words] += 1
+        if words in emoticon_list:
+            emoji_map[emotion][words] += 1
+    '''
+    # Conteggio degli hashtag e delle emoticon
+    line_words_emotion_list = []
+    line_hashtag_list = []
+    line_emoticon_list = []
+
+    for words in line.split():
+        if words.startswith('#') and words != '#':
+            line_hashtag_list.append(words)
+        if words in emoticon_list:
+            line_emoticon_list.append(words)
+
     line = remove_nick_and_url(line)
-    line = delete_emoji_and_emoticon(line,emoticon_list)
+    line = delete_emoji_and_emoticon(line, emoticon_list)
     line = remove_punctuation(line)
     line = remove_digits(line)
     line = line.lower()
     line = substitute_slangs(line, slang_dict)
-    # line = nltk.word_tokenize(line)  # toglie anche la punteggiatura
-    # line = nltk.pos_tag(line)  # ha senso farlo se poi non uso i tag?
-    # line = do_stemming(line)
-    # WordNetLemmatizer().lemmatize(line) può prendere in considerazione il tag se si fa pos tag
     line = WordNetLemmatizer().lemmatize(line)
     line = delete_stopwords(line, stop_word_list)
-    return line
+    line = re.sub(' +', ' ', line.strip())
+    '''
+    CODICE SOLUZIONE PRECEDENTE
+    for words in line.split():
+        if words in emotion_words[emotion]:
+            emotion_words_map[emotion][words] += 1
+    '''
+    # Count delle parole
+    for words in line.split():
+        if words in emotion_words[emotion]:
+            line_words_emotion_list.append(words)
+
+    return line, line_words_emotion_list, line_emoticon_list, line_hashtag_list
 
 
-def findEmoticon(client):
-    db = client['TwitterEmotionsSlave']
+def findEmoticon():
     col = db.Emoticon
     emoticon_dict = {}
     for emoticon in col.find():
@@ -88,8 +132,7 @@ def findEmoticon(client):
     return emoticon_dict
 
 
-def findNegativeWord(client):
-    db = client['TwitterEmotionsSlave']
+def findNegativeWord():
     col = db.NegativeWord
     negative_word_list = []
     for negative_word in col.find():
@@ -97,8 +140,7 @@ def findNegativeWord(client):
     return negative_word_list
 
 
-def findSlang(client):
-    db = client['TwitterEmotionsSlave']
+def findSlang():
     col = db.Slang
     slang_dict = {}
     for slang in col.find():
@@ -107,35 +149,166 @@ def findSlang(client):
     return slang_dict
 
 
-def findTweet(client):
-    db = client['TwitterEmotionsSlave']
+def findTweet():
     col = db.Tweet
     tweet_list = []
-    for tweet in col.find():
+    for tweet in col.find({"Processed": 0}):
+        tweet_list.append([tweet["Text"], tweet["Emotion"], tweet["_id"]])
+    return tweet_list
+
+
+def findProcessedTweet():
+    col = db.Tweet
+    tweet_list = []
+    for tweet in col.find({"Processed": 1}):
         tweet_list.append([tweet["Text"], tweet["Emotion"]])
     return tweet_list
 
 
-def findStopWord(client):
-    db = client['TwitterEmotionsSlave']
+def findStopWord():
     col = db.StopWord
     stop_word_list = []
     for stop_word in col.find():
         stop_word_list.append(stop_word["Word"])
     return stop_word_list
 
-def prova():
-    tweet_list = findTweet(client_slaves[0])
-    slang_dict = findSlang(client_slaves[0])
-    emoticon_list = findEmoticon(client_slaves[0])
-    stop_word_list = findStopWord(client_slaves[0])
-    for tweet in tweet_list:
-        #print(tweet[0])
-        print(clean_tweet(tweet[0], emoticon_list, slang_dict, stop_word_list))
-# print(findEmoticon(client_slaves[0]))
-# print(findNegativeWord(client_slaves[0]))
-# print(findSlang(client_slaves[0]))
-# print(findTweet(client_slaves[0]))
-# print(findStopWord(client_slaves[0]))
 
-prova()
+def findEmotionWords():
+    col = db.WordCount
+    emotion_words = {}
+    for emotion in col.find():
+        word_list = []
+        for word in emotion["Words"]:
+            word_list.append(word["Word"])
+        emotion_words[emotion["Emotion"]] = word_list
+    return emotion_words
+
+
+def main():
+    with open('setting.json') as json_file:
+        setting_data = json.load(json_file)
+    mongos_data = setting_data['MongoDB']["Mongos_client"]
+    global client_master
+    client_master = pymongo.MongoClient(mongos_data["Address"], mongos_data["Port"])
+    global db
+    db = client_master['TwitterEmotions']
+    col = db.Tweet
+    emotion_words = findEmotionWords()
+    tweet_list = findTweet()
+    slang_dict = findSlang()
+    emoticon_list = findEmoticon()
+    stop_word_list = findStopWord()
+    count = 0
+    # tweets_processed = []
+    # return line, line_words_emotion_list, line_emoticon_list, line_emoticon_list
+
+    for tweet in tweet_list:
+        processed_tweet, line_words_emotion_list, line_emoticon_list, line_hashtag_list = clean_tweet(tweet[0],
+                                                                                                      tweet[1],
+                                                                                                      emoticon_list,
+                                                                                                      slang_dict,
+                                                                                                      stop_word_list,
+                                                                                                      emotion_words)
+        col.update_one({"_id": tweet[2]}, {'$set': {
+            'ProcessedTweet': processed_tweet, "Words": line_words_emotion_list, "Emoticon": line_emoticon_list,
+            "Hashtag": line_hashtag_list}})
+
+        # DELLA SOLUZIONE PRECEDENTE tweets_processed.append({"Text": processed_tweet, "Emotion": tweet[1], "Processed": 1})
+        count = count + 1
+        if (count % 10000) == 0:
+            print("Processati " + str(count) + "/" + str(len(tweet_list)))
+
+
+'''
+CODICE SOLUZIONE PRECECEDENTE
+
+def main():
+    with open('setting.json') as json_file:
+        setting_data = json.load(json_file)
+    mongos_data = setting_data['MongoDB']["Mongos_client"]
+    global client_master
+    client_master = pymongo.MongoClient(mongos_data["Address"], mongos_data["Port"])
+    global db
+    db = client_master['TwitterEmotions']
+    emotion_words = findEmotionWords()
+    tweet_list = findTweet()
+    slang_dict = findSlang()
+    emoticon_list = findEmoticon()
+    stop_word_list = findStopWord()
+    count = 0
+    tweets_processed = []
+    for tweet in tweet_list:
+        processed_tweet = clean_tweet(tweet[0], tweet[1], emoticon_list, slang_dict, stop_word_list, emotion_words)
+        tweets_processed.append({"Text": processed_tweet, "Emotion": tweet[1], "Processed": 1})
+        count = count + 1
+        if (count % 10000) == 0:
+            print("Processati " + str(count) + "/" + str(len(tweet_list)))
+            break;
+    for emotion in emotion_words_map:
+        for word in emotion_words_map[emotion]:
+            print(word + " " + str(emotion_words_map[emotion][word]))
+    # Memorizzazione Tweet Processati
+    # col = db.Tweet
+    # col.delete_many({"Processed": 1})
+    # col.insert_many(tweets_processed)
+    # Memorizzazione Hashtag count
+    col = db.HashtagCount
+    col.delete_many({})
+    hashtag_documents = []
+    for emotion in hashtag_map:
+        for term in hashtag_map[emotion]:
+            hashtag_documents.append({"Emotion": emotion, "Hashtag": term, "Count": hashtag_map[emotion][term]})
+    col.insert_many(hashtag_documents)
+    # Memorizzazione Emoticon count
+    col = db.EmoticonCount
+    emotion_documents = []
+    for emotion in emoji_map:
+        for emoticon in emoji_map[emotion]:
+            emotion_documents.append({"Emotion": emotion, "Emoticon": emoticon, 'Count': emoji_map[emotion][emoticon]})
+    col.delete_many({})
+    col.insert_many(emotion_documents)
+'''
+
+
+def map():
+    with open('setting.json') as json_file:
+        setting_data = json.load(json_file)
+    mongos_data = setting_data['MongoDB']["Mongos_client"]
+    global client_master
+    client_master = pymongo.MongoClient(mongos_data["Address"], mongos_data["Port"])
+    global db
+    db = client_master['TwitterEmotions']
+
+    with open("map_words.js", 'r') as file:
+        map = Code(file.read())
+
+    with open("reduce_words.js", 'r') as file:
+        reduce = Code(file.read())
+
+    result = db.Tweet.map_reduce(map, reduce, "myresults")
+
+    f = open("map_reduce_word.txt", "a", encoding="utf-8")
+    for doc in result.find():
+        f.write(str(doc)+"\n")
+    f.close()
+
+    with open("map_emoticon.js", 'r') as file:
+        map = Code(file.read())
+
+    result = db.Tweet.map_reduce(map, reduce, "myresults")
+    f = open("map_reduce_emoticon.txt", "a", encoding="utf-8")
+    for doc in result.find():
+        f.write(str(doc)+"\n")
+    f.close()
+
+    with open("map_hashtag.js", 'r') as file:
+        map = Code(file.read())
+
+    result = db.Tweet.map_reduce(map, reduce, "myresults", )
+    f = open("map_reduce_hashtag.txt", "a", encoding="utf-8")
+    for doc in result.find():
+        f.write(str(doc)+"\n")
+    f.close()
+
+#main()
+map()

@@ -74,7 +74,7 @@ def load_tweet():
         with open(path_tweet + '\\' + filename, 'r', encoding="utf8") as reader:
             line = reader.readline()
             while line != '':
-                tweets.append({"Text": line, "Emotion": emotion})
+                tweets.append({"Text": line, "Emotion": emotion, "Processed": 0})
                 line = reader.readline()
 
     db = client_master['TwitterEmotions']
@@ -118,8 +118,8 @@ def load_emotions():
                 'Words': {'Word': key, 'Count': 0, "FlagEmoSN": word_dictionary[key][0],
                           "FlagNRC": word_dictionary[key][1], "FlagSentisense": word_dictionary[key][2]}}})
 
-def initialise_cluster(mongos_data):
 
+def initialise_cluster(mongos_data):
     global client_master
     client_master = pymongo.MongoClient(mongos_data["Address"], mongos_data["Port"])
 
