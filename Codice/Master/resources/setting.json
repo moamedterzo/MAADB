@@ -1,0 +1,24 @@
+{
+	"SqlServer" : 
+	{
+		"HostName" : "localhost\\SQLEXPRESS",
+		"DatabaseName" : "TwitterEmotions",
+		"Username" : "sa",
+		"Password" : "maadb2020"
+	},
+	"MongoDB" :
+	{
+		"Username" : "sa",
+		"Password" : "maadb2020",
+		"Mongos_client" :
+		{
+			"Address" : "localhost",
+			"Port" : 27017
+		},
+		"PrimaryNode" : {"Address" : "localhost", "DBPort" : 27019 },
+		"SecondaryNodes" : [
+			{"Address" : "localhost", "DBPort" : 27020, "ServicePort": 27120},
+			{"Address" : "localhost", "DBPort" : 27021, "ServicePort": 27121}
+		]
+	}
+}
