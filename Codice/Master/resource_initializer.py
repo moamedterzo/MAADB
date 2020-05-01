@@ -45,7 +45,7 @@ def load_tweet():
 
             line = reader.readline()
             while line != '':
-                tweets.append((line.replace("'", "''"), emotion))
+                tweets.append((line.replace("'", "''").replace('\\','\\\\'), emotion))
                 line = reader.readline()
 
     return tweets

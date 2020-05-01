@@ -4,6 +4,7 @@ import threading
 from bson.code import Code
 import pymongo
 
+
 def run_twitter_analisys(setting_data):
 
     preprocessing(setting_data)

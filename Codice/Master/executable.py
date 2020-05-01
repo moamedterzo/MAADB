@@ -33,7 +33,7 @@ if __name__ == "__main__":
             # inizializzazione database
             if selectedOperation == "1":
                 if args.database_type == "S":
-                    r_du.initialise_database()
+                    r_du.initialise_database(setting_data['MariaDB'])
                 elif args.database_type == "M":
                     m_du.initialise_cluster(setting_data['MongoDB']["Mongos_client"])
 
@@ -42,7 +42,7 @@ if __name__ == "__main__":
             # run twitter analisys
             elif selectedOperation == "2":
                 if args.database_type == "S":
-                    print("Niente ancora")
+                    r_du.run_twitter_analisys(setting_data['MariaDB'])
                 elif args.database_type == "M":
                     m_pa.run_twitter_analisys(setting_data)
 
