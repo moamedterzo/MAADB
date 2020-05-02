@@ -1,7 +1,6 @@
 import pymongo, json
 import tweet_processing as tp
 import resource_initializer as ri
-import os
 
 def preprocess_all_tweets(ShardAddress, ShardPort):
 
@@ -14,7 +13,6 @@ def preprocess_all_tweets(ShardAddress, ShardPort):
     client_master = pymongo.MongoClient(mongos_data["Address"], mongos_data["Port"])
     db = client_master['TwitterEmotions']
 
-    emotion_words = findEmotionWords(db)
     slang_dict = findSlang(db)
     emoticon_list = findEmoticon(db)
     stop_word_list = findStopWord(db)
@@ -30,7 +28,7 @@ def preprocess_all_tweets(ShardAddress, ShardPort):
     bulk = col.initialize_unordered_bulk_op()
 
     for tweet in tweet_list:
-        words, emoticons, hashtags = tp.process_tweet(tweet[0], emoticon_list, slang_dict, stop_word_list,emotion_words)
+        words, emoticons, hashtags = tp.process_tweet(tweet[0], emoticon_list, slang_dict, stop_word_list)
 
         bulk.find({'_id': tweet[2]}).update({'$set': {
              "Words": words, "Emoticon": emoticons, "Hashtag": hashtags}})
@@ -51,17 +49,6 @@ def findStopWord(db):
     for stop_word in col.find():
         stop_word_list.append(stop_word["Word"])
     return stop_word_list
-
-
-def findEmotionWords(db):
-    col = db.WordCount
-    emotion_words = {}
-    for emotion in col.find():
-        word_list = []
-        for word in emotion["Words"]:
-            word_list.append(word["Word"])
-        emotion_words[emotion["Emotion"]] = word_list
-    return emotion_words
 
 
 def findEmoticon(db):
@@ -94,7 +81,7 @@ def findTweet(col):
 
     tweet_list = []
     for tweet in col.find({}):
-        tweet_list.append([tweet["Text"], tweet["Emotion"], tweet["_id"]])
+        tweet_list.append([tweet["Text"], tweet["Emotion"], tweet['_id']])
 
     return tweet_list
 
@@ -107,11 +94,17 @@ def initialise_cluster(mongos_data):
     client_master = pymongo.MongoClient(mongos_data["Address"], mongos_data["Port"])
     db = client_master["TwitterEmotions"]
 
+    print('Inserting neg words')
     load_negative_word(db)
+    print('Inserting slang')
     load_slang(db)
+    print('Inserting stop words')
     load_stopwords(db)
+    print('Inserting emoji and emoticons')
     load_emojii_emoticon(db)
+    print('Inserting tweets')
     load_tweet(db)
+    print('Inserting word resources')
     load_emotions(db)
 
 
@@ -167,7 +160,7 @@ def load_tweet(db):
 
 def load_emotions(db):
 
-    col = db.WordCount
+    col = db.WordResources
     col.delete_many({})
 
     word_counts = {}

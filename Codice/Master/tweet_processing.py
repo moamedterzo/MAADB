@@ -1,9 +1,6 @@
-import json
 import re
-import pymongo
 from resource_initializer import punctuations
 from nltk.stem import WordNetLemmatizer
-from bson.code import Code
 
 client_master = None
 client_shard = None
@@ -59,8 +56,8 @@ def delete_stopwords(line, stop_word_list):
             line = line[:-len(stop_word[::])]
     return line
 
-def process_tweet(line, emoticon_list, slang_dict, stop_word_list, emotion_words):
 
+def process_tweet(line, emoticon_list, slang_dict, stop_word_list):
 
     # Conteggio degli hashtag e delle emoticon
     line_words_emotion_list = []
@@ -88,7 +85,8 @@ def process_tweet(line, emoticon_list, slang_dict, stop_word_list, emotion_words
 
     # Count delle parole
     for words in line.split():
-        line_words_emotion_list.append(words)
+        if words not in line_hashtag_list:
+            line_words_emotion_list.append(words)
 
     return line_words_emotion_list, line_emoticon_list, line_hashtag_list
 
