@@ -1,15 +1,13 @@
 import requests
 import mongo_db_utils as mu
 import threading
-from bson.code import Code
 import pymongo
-
 
 def run_twitter_analisys(setting_data):
 
     preprocessing(setting_data)
     print()
-    print("Fine preprocess")
+    print("Fine preprocessing")
 
     map_reduce(setting_data)
     print("Fine map reduce")
@@ -40,37 +38,34 @@ def map_reduce(setting_data):
     client_master = pymongo.MongoClient(mongos_data["Address"], mongos_data["Port"])
     db = client_master['TwitterEmotions']
 
-    with open("resources/map_words.js", 'r') as file:
-        map = Code(file.read())
+    # words
+    db.WordCount.delete_many({})
+    pipeline = [
+        {"$unwind": "$Words"},
+        {"$group": {"_id": {"emotion": "$Emotion", "word": "$Words"}, "count": {"$sum": 1}}},
+        {"$group": {"_id": "$_id.emotion", "values": {"$push": {"word": "$_id.word", "count": "$count"}}}}
+    ]
+    db.WordCount.insert_many(list(db.Tweet.aggregate(pipeline, allowDiskUse=True)))
 
-    with open("resources/reduce_words.js", 'r') as file:
-        reduce = Code(file.read())
+    # emoticons
+    db.EmoticonCount.delete_many({})
+    pipeline = [
+        {"$unwind": "$Emoticon"},
+        {"$group": {"_id": {"emotion": "$Emotion", "emoticon": "$Emoticon"}, "count": {"$sum": 1}}},
+        {"$group": {"_id": "$_id.emotion", "values": {"$push": {"emoticon": "$_id.emoticon", "count": "$count"}}}}
+    ]
 
-    result = db.Tweet.map_reduce(map, reduce, "myresults")
+    db.EmoticonCount.insert_many(list(db.Tweet.aggregate(pipeline)))
 
-    f = open("output/map_reduce_word.txt", "a", encoding="utf-8")
-    for doc in result.find():
-        f.write(str(doc) + "\n")
-    f.close()
+    #hashtags
+    db.HashtagCount.delete_many({})
+    pipeline = [
+        {"$unwind": "$Hashtag"},
+        {"$group": {"_id": { "emotion": "$Emotion", "hashtag": "$Hashtag"}, "count": {"$sum": 1}}},
+        {"$group": {"_id": "$_id.emotion", "values" : {"$push": {"hashtag": "$_id.hashtag", "count": "$count"}}}}
+    ]
 
-    with open("resources/map_emoticon.js", 'r') as file:
-        map = Code(file.read())
-
-    result = db.Tweet.map_reduce(map, reduce, "myresults2")
-
-    f = open("output/map_reduce_emoticon.txt", "a", encoding="utf-8")
-    for doc in result.find():
-        f.write(str(doc) + "\n")
-    f.close()
-
-    with open("resources/map_hashtag.js", 'r') as file:
-        map = Code(file.read())
-
-    result = db.Tweet.map_reduce(map, reduce, "myresults3", )
-    f = open("output/map_reduce_hashtag.txt", "a", encoding="utf-8")
-    for doc in result.find():
-        f.write(str(doc) + "\n")
-    f.close()
+    db.HashtagCount.insert_many(list(db.Tweet.aggregate(pipeline)))
 
 
 

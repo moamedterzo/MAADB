@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS `emoticoncount` (
 -- Dump della struttura di tabella twitteremotions.hashtagcount
 CREATE TABLE IF NOT EXISTS `hashtagcount` (
   `Emotion` varchar(15) COLLATE latin7_general_cs NOT NULL,
-  `Hashtag` varchar(30) COLLATE latin7_general_cs NOT NULL,
+  `Hashtag` varchar(100) CHARACTER SET utf16 COLLATE utf16_unicode_ci NOT NULL,
   `Count` int(11) NOT NULL DEFAULT 0,
   PRIMARY KEY (`Emotion`,`Hashtag`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin7 COLLATE=latin7_general_cs;
@@ -85,8 +85,8 @@ CREATE TABLE IF NOT EXISTS `tweet` (
 
 -- Dump della struttura di tabella twitteremotions.wordcount
 CREATE TABLE IF NOT EXISTS `wordcount` (
-  `Emotion` varchar(15) COLLATE latin7_general_cs NOT NULL,
-  `Word` varchar(50) COLLATE latin7_general_cs NOT NULL,
+  `Emotion` varchar(15) CHARACTER SET utf8mb4 NOT NULL,
+  `Word` varchar(200) CHARACTER SET utf16 COLLATE utf16_unicode_ci NOT NULL,
   `Count` int(11) NOT NULL DEFAULT 0,
   `FlagSentisense` bit(1) NOT NULL DEFAULT b'0',
   `FlagNRC` bit(1) NOT NULL DEFAULT b'0',

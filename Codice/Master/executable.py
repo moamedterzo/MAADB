@@ -2,6 +2,17 @@ import json
 import argparse
 import relational_db_utils as r_du, mongo_db_utils as m_du
 import mongo_primary_node as m_pa, mongo_secondary_node as m_sa
+import time
+
+
+
+
+def show_time(sec):
+  mins = sec // 60
+  sec = sec % 60
+  hours = mins // 60
+  mins = mins % 60
+  print("Time Lapsed = {0}:{1}:{2}".format(int(hours),int(mins),sec))
 
 
 if __name__ == "__main__":
@@ -25,10 +36,13 @@ if __name__ == "__main__":
         while selectedOperation != "-1":
             print("\nSelect operation to do:")
             print("\t1 to initialize database")
-            print("\t2 to run Twitter analisys")
+            print("\t2 to run Tweets analisys")
+            print("\t3 to show results")
             print("\t-1 to exit")
 
             selectedOperation = input()
+
+            start_time = time.time()
 
             # inizializzazione database
             if selectedOperation == "1":
@@ -46,6 +60,15 @@ if __name__ == "__main__":
                 elif args.database_type == "M":
                     m_pa.run_twitter_analisys(setting_data)
 
+            # show results
+            elif selectedOperation == "3":
+                print("Niente ancora")
+
+            end_time = time.time()
+
+            show_time(end_time - start_time)
+
+
     # se sono secondary, avvio il servizio che rimane in ascolto di eventuali richieste
     elif args.database_type == "M" and args.mongodb_nodetype == "S":
 
@@ -55,5 +78,6 @@ if __name__ == "__main__":
         m_sa.start_secondary_node(secondary_setting_data['ServicePort'],
                                   secondary_setting_data['Address'],
                                   secondary_setting_data['DBPort'])
+
 
 
