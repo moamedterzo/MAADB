@@ -2,14 +2,19 @@ from collections import defaultdict
 import pymongo
 from wordcloud import WordCloud, STOPWORDS
 import mariadb
+import numpy as np
+from PIL import Image
 
 
 def print_cloud(frequency_list, path, width, height):
+    twitter_mask = np.array(Image.open("twitter_logo.png"))
+
     stopwords = set(STOPWORDS)
-    wordcloud = WordCloud(width=width, height=height,
-                          background_color='white',
-                          stopwords=stopwords,
-                          min_font_size=10).generate_from_frequencies(frequency_list)
+
+    wordcloud = WordCloud(background_color="white", mask=twitter_mask, width=width, height=height, stopwords=stopwords)
+
+    wordcloud.generate_from_frequencies(frequency_list)
+ 
     wordcloud.to_file("output_clouds/" + path + ".png")
 
 
