@@ -1,18 +1,16 @@
 import json
 import argparse
 import relational_db_utils as r_du, mongo_db_utils as m_du
-import mongo_primary_node as m_pa, mongo_secondary_node as m_sa
+import mongo_primary_node as m_pa, mongo_secondary_node as m_sa, create_clouds as cc
 import time
 
 
-
-
 def show_time(sec):
-  mins = sec // 60
-  sec = sec % 60
-  hours = mins // 60
-  mins = mins % 60
-  print("Time Lapsed = {0}:{1}:{2}".format(int(hours),int(mins),sec))
+    mins = sec // 60
+    sec = sec % 60
+    hours = mins // 60
+    mins = mins % 60
+    print("Time Lapsed = {0}:{1}:{2}".format(int(hours), int(mins), sec))
 
 
 if __name__ == "__main__":
@@ -25,7 +23,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    #lettura file setting
+    # lettura file setting
     with open('resources/setting.json') as json_file:
         setting_data = json.load(json_file)
 
@@ -62,7 +60,10 @@ if __name__ == "__main__":
 
             # show results
             elif selectedOperation == "3":
-                print("Niente ancora")
+                if args.database_type == "S":
+                    cc.make_clouds(setting_data['MariaDB'], 0)
+                elif args.database_type == "M":
+                    cc.make_clouds(setting_data['MongoDB']["Mongos_client"], 1)
 
             end_time = time.time()
 
@@ -78,6 +79,3 @@ if __name__ == "__main__":
         m_sa.start_secondary_node(secondary_setting_data['ServicePort'],
                                   secondary_setting_data['Address'],
                                   secondary_setting_data['DBPort'])
-
-
-
