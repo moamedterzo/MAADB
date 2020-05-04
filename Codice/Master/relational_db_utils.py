@@ -295,4 +295,9 @@ def get_id_emoticon_from_code(code, cursor):
     for (ID,) in cursor:
         return ID
 
+    #se non esiste, lo creo al volo
+    cursor.executemany("INSERT INTO emoticon(code, polarity) values (?, ?)", [(code, 0)])
 
+    cursor.execute("SELECT ID FROM emoticon where code='" + code.replace('\'','\'\'').replace('\\','\\\\') +"' limit 1")
+    for (ID,) in cursor:
+        return ID

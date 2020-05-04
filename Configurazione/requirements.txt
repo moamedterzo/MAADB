@@ -3,5 +3,6 @@ json-rpc==1.13.0
 pymongo==3.10.1
 mariadb==0.9.57
 wordcloud
+emoji==0.5.4
 
 
