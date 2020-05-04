@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS `emoticon` (
   `Code` varchar(30) COLLATE utf16_unicode_ci NOT NULL DEFAULT '0',
   `Polarity` smallint(6) NOT NULL DEFAULT 0,
   PRIMARY KEY (`ID`)
-) ENGINE=InnoDB AUTO_INCREMENT=11235 DEFAULT CHARSET=utf16 COLLATE=utf16_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=12869 DEFAULT CHARSET=utf16 COLLATE=utf16_unicode_ci;
 
 -- L’esportazione dei dati non era selezionata.
 
@@ -79,7 +79,7 @@ CREATE TABLE IF NOT EXISTS `tweet` (
   `Emotion` varchar(15) COLLATE utf16_unicode_ci NOT NULL DEFAULT '0',
   `Text` varchar(1000) COLLATE utf16_unicode_ci NOT NULL DEFAULT '0',
   PRIMARY KEY (`ID`)
-) ENGINE=InnoDB AUTO_INCREMENT=2752404 DEFAULT CHARSET=utf16 COLLATE=utf16_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3789893 DEFAULT CHARSET=utf16 COLLATE=utf16_unicode_ci;
 
 -- L’esportazione dei dati non era selezionata.
 
@@ -88,9 +88,9 @@ CREATE TABLE IF NOT EXISTS `wordcount` (
   `Emotion` varchar(15) CHARACTER SET utf8mb4 NOT NULL,
   `Word` varchar(200) CHARACTER SET utf16 COLLATE utf16_unicode_ci NOT NULL,
   `Count` int(11) NOT NULL DEFAULT 0,
-  `FlagSentisense` bit(1) NOT NULL DEFAULT b'0',
-  `FlagNRC` bit(1) NOT NULL DEFAULT b'0',
-  `FlagEmoSN` bit(1) NOT NULL DEFAULT b'0',
+  `FlagSentisense` tinyint(4) NOT NULL DEFAULT 0,
+  `FlagNRC` tinyint(4) NOT NULL DEFAULT 0,
+  `FlagEmoSN` tinyint(4) NOT NULL DEFAULT 0,
   PRIMARY KEY (`Emotion`,`Word`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin7 COLLATE=latin7_general_cs;
 
