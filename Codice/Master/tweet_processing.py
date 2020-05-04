@@ -5,6 +5,37 @@ from nltk import word_tokenize, pos_tag
 from nltk.corpus import wordnet
 import emoji
 
+#punctuations
+def get_punctuations():
+    custom_punctuations = punctuations
+    custom_punctuations.append('–')
+    custom_punctuations.append('—')
+    custom_punctuations.append('–')
+    custom_punctuations.append('¿')
+    custom_punctuations.append('؟')
+    custom_punctuations.append('…')
+    custom_punctuations.append('‘')
+    custom_punctuations.append('’')
+    custom_punctuations.append('“')
+    custom_punctuations.append('”')
+    custom_punctuations.append('«')
+    custom_punctuations.append('»')
+    custom_punctuations.append('§')
+    custom_punctuations.append('©')
+    custom_punctuations.append('*')
+    custom_punctuations.append('^')
+    custom_punctuations.append('%')
+    custom_punctuations.append('#')
+    custom_punctuations.append('•')
+    custom_punctuations.append('|')
+    custom_punctuations.append('~')
+    custom_punctuations.append(',')
+    custom_punctuations.append('.')
+
+    return custom_punctuations
+
+
+custom_punctuations = get_punctuations()
 lemmatizer = WordNetLemmatizer()
 
 client_master = None
@@ -21,7 +52,7 @@ def remove_nick_and_url(line):
 
 
 def remove_punctuation(line):
-    for punctuation in punctuations:
+    for punctuation in custom_punctuations:
         # l'apice, dato che potrebbe essere parte integrante di una parola, va gestito in maniera differente
         if punctuation != "'":
             line = line.replace(punctuation, " ")
@@ -30,11 +61,8 @@ def remove_punctuation(line):
     line = line.replace("'s ", " ")
     line = line.replace(" '", " ")
 
-    return line
-
-
-def remove_digits(line):
-    return ''.join(" " if c.isdigit() else c for c in line)
+    #remove digits
+    return ''.join(c for c in line if not c.isdigit())
 
 
 def substitute_slangs(line, slang_dict):
@@ -54,6 +82,10 @@ def substitute_slangs(line, slang_dict):
 def substitute_contractions(line):
     for contraction in contractions:
         line = line.replace(" " + contraction + " ", " " + contractions[contraction] + " ")
+
+    #do a second swipe
+    for contraction in contractions:
+        line = line.replace(contraction, contractions[contraction])
 
     return line
 
@@ -124,17 +156,15 @@ def process_tweet(line, emoticon_list, slang_dict, stop_word_list):
     line_emoticon_list.extend(standard_emoji_list)
     del standard_emoji_list
 
-    #todo come gestire i negativi?
-    #come gestire i verbi composti ? (fired up)
-    line = remove_punctuation(line)
-    line = remove_digits(line)
-    line = line.lower()
+    line = remove_punctuation(line).lower()
 
     line = substitute_contractions(line)
     line = substitute_slangs(line, slang_dict)
+    line = line.replace("'", " ")
 
     tokens = word_tokenize(line)
     lemmas = lemmatize_tokens(tokens)
+
     lemmas = [word for word in lemmas if word not in stop_word_list]
 
     #print(tokens)

@@ -2,6 +2,7 @@ import pymongo, json
 import tweet_processing as tp
 import resource_initializer as ri
 
+
 def preprocess_all_tweets(ShardAddress, ShardPort):
 
     #get mongos data
@@ -89,23 +90,29 @@ def findTweet(col):
 
 
 
-def initialise_cluster(mongos_data):
+def initialise_cluster(mongos_data, skip_tweets = True):
 
     client_master = pymongo.MongoClient(mongos_data["Address"], mongos_data["Port"])
     db = client_master["TwitterEmotions"]
 
     print('Inserting neg words')
     load_negative_word(db)
+
     print('Inserting slang')
     load_slang(db)
+
     print('Inserting stop words')
     load_stopwords(db)
+
     print('Inserting emoji and emoticons')
     load_emojii_emoticon(db)
-    print('Inserting tweets')
-    load_tweet(db)
+
+    if not skip_tweets:
+        print('Inserting tweets')
+        load_tweet(db)
+
     print('Inserting word resources')
-    load_emotions(db)
+    load_resources(db)
 
 
 
@@ -158,26 +165,24 @@ def load_tweet(db):
     col.insert_many(tweets)
 
 
-def load_emotions(db):
+def load_resources(db):
 
-    col = db.WordResources
+    col = db.WordCount
     col.delete_many({})
 
-    word_counts = {}
+    word_counts = []
     for row in ri.load_emotions():
 
         emotion = row[0]
-        if emotion not in word_counts:
-            word_counts[emotion] = []
 
-        word_counts[emotion].append({'Word': row[1], 'Count': 0, "FlagEmoSN": row[2],
+        word_counts.append({"_id" : {"Emotion" : emotion, 'Word': row[1] }, 'Count': 0, "FlagEmoSN": row[2],
                       "FlagNRC": row[3], "FlagSentisense": row[4]})
 
-    documents = []
-    for key in word_counts:
-        documents.append({"Emotion": key, "Words": word_counts[key]})
+    #documents = []
+    #for key in word_counts:
+    #    documents.append({"Emotion": key, "Words": word_counts[key]})
 
-    col.insert_many(documents)
+    col.insert_many(word_counts)
 
 
 

@@ -2,6 +2,7 @@ import requests
 import mongo_db_utils as mu
 import threading
 import pymongo
+from pymongo import UpdateOne
 
 def run_twitter_analisys(setting_data):
 
@@ -39,13 +40,18 @@ def map_reduce(setting_data):
     db = client_master['TwitterEmotions']
 
     # words
-    db.WordCount.delete_many({})
+    db.WordCount.delete_many({ "FlagEmoSN": 0, "FlagNRC": 0, "FlagSentisense":0})
     pipeline = [
         {"$unwind": "$Words"},
-        {"$group": {"_id": {"emotion": "$Emotion", "word": "$Words"}, "count": {"$sum": 1}}},
-        {"$group": {"_id": "$_id.emotion", "values": {"$push": {"word": "$_id.word", "count": "$count"}}}}
+        {"$group": {"_id": {"Emotion": "$Emotion", "Word": "$Words"}, "Count": {"$sum": 1}}}
     ]
-    db.WordCount.insert_many(list(db.Tweet.aggregate(pipeline, allowDiskUse=True)))
+
+
+    bulk_requests = []
+    for word_count in list(db.Tweet.aggregate(pipeline, allowDiskUse=True)):
+        bulk_requests.append(UpdateOne({"_id" : word_count['_id'] }, {'$set': word_count}, upsert=True))
+
+    db.WordCount.bulk_write(bulk_requests)
 
     # emoticons
     db.EmoticonCount.delete_many({})
