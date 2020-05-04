@@ -156,32 +156,34 @@ def stats(setting_data, dbms):
                                                   "FlagEmoSN": FlagEmoSN}
 
         for emotion in wordcount_documents:
-            total_type_useful = {"FlagSentisense": 0, "FlagNRC": 0, "FlagEmoSN": 0, "Custom": 0}
-            total_type_unuseful = {"FlagSentisense": 0, "FlagNRC": 0, "FlagEmoSN": 0, "Custom": 0}
+            total_type_useful = {"FlagSentisense": 0, "FlagNRC": 0, "FlagEmoSN": 0}
+            total_type_unuseful = {"FlagSentisense": 0, "FlagNRC": 0, "FlagEmoSN": 0}
             new_word = []
             unuseful_words = []
+            threshold_to_consider_a_word_frequent = 20
 
-            total = 0
             for word in wordcount_documents[emotion]:
+                flag_Sentisense = wordcount_documents[emotion][word]["FlagSentisense"]
+                flag_NRC = wordcount_documents[emotion][word]["FlagNRC"]
+                flag_EmoSN = wordcount_documents[emotion][word]["FlagEmoSN"]
                 if wordcount_documents[emotion][word]["Count"] > 0:
-                    if wordcount_documents[emotion][word]["FlagSentisense"] == 0 and wordcount_documents[emotion][word]["FlagNRC"] == 0 and wordcount_documents[emotion][word]["FlagEmoSN"] == 0:
-                        total_type_useful["Custom"] = total_type_useful["Custom"] + 1
-                        new_word.append(wordcount_documents[emotion][word])
+                    if flag_Sentisense == 0 and flag_NRC == 0 and flag_EmoSN == 0:
+                        new_word.append(
+                            [wordcount_documents[emotion][word], wordcount_documents[emotion][word]["Count"]])
                     else:
-                        total_type_useful["FlagSentisense"] = total_type_useful["FlagSentisense"] + wordcount_documents[emotion][word]["FlagSentisense"]
-                        total_type_useful["FlagNRC"] = total_type_useful["FlagNRC"] + wordcount_documents[emotion][word]["FlagNRC"]
-                        total_type_useful["FlagEmoSN"] = total_type_useful["FlagEmoSN"] + wordcount_documents[emotion][word]["FlagEmoSN"]
+                        total_type_useful["FlagSentisense"] += flag_Sentisense
+                        total_type_useful["FlagNRC"] += flag_NRC
+                        total_type_useful["FlagEmoSN"] += flag_EmoSN
                 else:
                     unuseful_words.append(word)
-                    total_type_unuseful["FlagSentisense"] = total_type_unuseful["FlagSentisense"] + wordcount_documents[emotion][word]["FlagSentisense"]
-                    total_type_unuseful["FlagNRC"] = total_type_unuseful["FlagNRC"] + wordcount_documents[emotion][word][
-                        "FlagNRC"]
-                    total_type_unuseful["FlagEmoSN"] = total_type_unuseful["FlagEmoSN"] + wordcount_documents[emotion][word]["FlagEmoSN"]
-                total = total + 1
+                    total_type_unuseful["FlagSentisense"] += flag_Sentisense
+                    total_type_unuseful["FlagNRC"] += flag_NRC
+                    total_type_unuseful["FlagEmoSN"] += flag_EmoSN
 
             print("Emozione " + emotion + "\n")
             if total_type_useful["FlagSentisense"] + total_type_unuseful["FlagSentisense"] != 0:
-                print("Sentisense parole che hanno contribuito all'analisi dei tweet: ", total_type_useful["FlagSentisense"],
+                print("Sentisense parole che hanno contribuito all'analisi dei tweet: ",
+                      total_type_useful["FlagSentisense"],
                       "/", (total_type_useful["FlagSentisense"] + total_type_unuseful["FlagSentisense"]), "\n")
             if total_type_useful["FlagNRC"] + total_type_unuseful["FlagNRC"]:
                 print("NRC parole che hanno contribuito all'analisi dei tweet: ", total_type_useful["FlagNRC"], "/",
@@ -189,9 +191,12 @@ def stats(setting_data, dbms):
             if total_type_useful["FlagEmoSN"] + total_type_unuseful["FlagEmoSN"]:
                 print("EmoSN parole che hanno contribuito all'analisi dei tweet: ", total_type_useful["FlagEmoSN"], "/",
                       (total_type_useful["FlagEmoSN"] + total_type_unuseful["FlagEmoSN"]), "\n")
-            print("Son state inoltre trovate ", total_type_useful["Custom"], " parole che potrebbero arricchire il dizionario \n")
-            #print("Nuove parole che possono essere aggiunte al dizionario ", new_word,"\n")
-            #print("Parole che possono essere rimosse al dizionario ", unuseful_words,"\n")
+            print("Son state inoltre trovate ", len(new_word), " parole che potrebbero arricchire il dizionario \n")
+            frequent = 0
+            for word in new_word:
+                if word[1] > threshold_to_consider_a_word_frequent:
+                    frequent += 1
+            print("Di queste", frequent, "sono particolarmente frequenti poichè occorrono più di", threshold_to_consider_a_word_frequent, "volte\n")
 
 def ddict():
     return defaultdict(ddict)
