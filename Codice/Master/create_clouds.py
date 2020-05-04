@@ -14,7 +14,7 @@ def print_cloud(frequency_list, path, width, height):
     wordcloud = WordCloud(background_color="white", mask=twitter_mask, width=width, height=height, stopwords=stopwords)
 
     wordcloud.generate_from_frequencies(frequency_list)
- 
+
     wordcloud.to_file("output_clouds/" + path + ".png")
 
 
@@ -134,3 +134,64 @@ def make_clouds(setting_data, dbms):
 
             print_cloud(emoticons, "emoticons_" + emotion, 500, 500)
             print("Generata word cloud delle emoticon per l'emozione " + emotion)
+
+
+def stats(setting_data, dbms):
+    if dbms == 1:
+        print("Stiamo lavorando per voi")
+    else:
+        conn = mariadb.connect(
+            user=setting_data['Username'],
+            password=setting_data['Password'],
+            host=setting_data['HostName'],
+            port=setting_data['Port'],
+            database=setting_data['DatabaseName'])
+        cursor = conn.cursor()
+        cursor.execute("SELECT Emotion, Word, Count, FlagSentisense, FlagNRC, FlagEmoSN FROM wordcount")
+
+        wordcount_documents = ddict()
+
+        for (Emotion, Word, Count, FlagSentisense, FlagNRC, FlagEmoSN) in cursor:
+            wordcount_documents[Emotion][Word] = {"Count": Count, "FlagSentisense": FlagSentisense, "FlagNRC": FlagNRC,
+                                                  "FlagEmoSN": FlagEmoSN}
+
+        for emotion in wordcount_documents:
+            total_type_useful = {"FlagSentisense": 0, "FlagNRC": 0, "FlagEmoSN": 0, "Custom": 0}
+            total_type_unuseful = {"FlagSentisense": 0, "FlagNRC": 0, "FlagEmoSN": 0, "Custom": 0}
+            new_word = []
+            unuseful_words = []
+
+            total = 0
+            for word in wordcount_documents[emotion]:
+                if wordcount_documents[emotion][word]["Count"] > 0:
+                    if wordcount_documents[emotion][word]["FlagSentisense"] == 0 and wordcount_documents[emotion][word]["FlagNRC"] == 0 and wordcount_documents[emotion][word]["FlagEmoSN"] == 0:
+                        total_type_useful["Custom"] = total_type_useful["Custom"] + 1
+                        new_word.append(wordcount_documents[emotion][word])
+                    else:
+                        total_type_useful["FlagSentisense"] = total_type_useful["FlagSentisense"] + wordcount_documents[emotion][word]["FlagSentisense"]
+                        total_type_useful["FlagNRC"] = total_type_useful["FlagNRC"] + wordcount_documents[emotion][word]["FlagNRC"]
+                        total_type_useful["FlagEmoSN"] = total_type_useful["FlagEmoSN"] + wordcount_documents[emotion][word]["FlagEmoSN"]
+                else:
+                    unuseful_words.append(word)
+                    total_type_unuseful["FlagSentisense"] = total_type_unuseful["FlagSentisense"] + wordcount_documents[emotion][word]["FlagSentisense"]
+                    total_type_unuseful["FlagNRC"] = total_type_unuseful["FlagNRC"] + wordcount_documents[emotion][word][
+                        "FlagNRC"]
+                    total_type_unuseful["FlagEmoSN"] = total_type_unuseful["FlagEmoSN"] + wordcount_documents[emotion][word]["FlagEmoSN"]
+                total = total + 1
+
+            print("Emozione " + emotion + "\n")
+            if total_type_useful["FlagSentisense"] + total_type_unuseful["FlagSentisense"] != 0:
+                print("Sentisense parole che hanno contribuito all'analisi dei tweet: ", total_type_useful["FlagSentisense"],
+                      "/", (total_type_useful["FlagSentisense"] + total_type_unuseful["FlagSentisense"]), "\n")
+            if total_type_useful["FlagNRC"] + total_type_unuseful["FlagNRC"]:
+                print("NRC parole che hanno contribuito all'analisi dei tweet: ", total_type_useful["FlagNRC"], "/",
+                      (total_type_useful["FlagNRC"] + total_type_unuseful["FlagNRC"]), "\n")
+            if total_type_useful["FlagEmoSN"] + total_type_unuseful["FlagEmoSN"]:
+                print("EmoSN parole che hanno contribuito all'analisi dei tweet: ", total_type_useful["FlagEmoSN"], "/",
+                      (total_type_useful["FlagEmoSN"] + total_type_unuseful["FlagEmoSN"]), "\n")
+            print("Son state inoltre trovate ", total_type_useful["Custom"], " parole che potrebbero arricchire il dizionario \n")
+            #print("Nuove parole che possono essere aggiunte al dizionario ", new_word,"\n")
+            #print("Parole che possono essere rimosse al dizionario ", unuseful_words,"\n")
+
+def ddict():
+    return defaultdict(ddict)

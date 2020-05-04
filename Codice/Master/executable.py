@@ -35,7 +35,8 @@ if __name__ == "__main__":
             print("\nSelect operation to do:")
             print("\t1 to initialize database")
             print("\t2 to run Tweets analisys")
-            print("\t3 to show results")
+            print("\t3 to create word cloud")
+            print("\t4 to show dictionary stats")
             print("\t-1 to exit")
 
             selectedOperation = input()
@@ -64,6 +65,12 @@ if __name__ == "__main__":
                     cc.make_clouds(setting_data['MariaDB'], 0)
                 elif args.database_type == "M":
                     cc.make_clouds(setting_data['MongoDB']["Mongos_client"], 1)
+
+            elif selectedOperation == "4":
+                if args.database_type == "S":
+                    cc.stats(setting_data['MariaDB'], 0)
+                elif args.database_type == "M":
+                    cc.stats(setting_data['MongoDB']["Mongos_client"], 1)
 
             end_time = time.time()
 
