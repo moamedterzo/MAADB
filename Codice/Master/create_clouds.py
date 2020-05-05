@@ -4,14 +4,24 @@ from wordcloud import WordCloud, STOPWORDS
 import mariadb
 import numpy as np
 from PIL import Image
+import string
 
 
 def print_cloud(frequency_list, path, width, height):
     twitter_mask = np.array(Image.open("twitter_logo.png"))
-
     stopwords = set(STOPWORDS)
+    # the regex used to detect words is a combination of normal words, ascii art, and emojis
+    # 2+ consecutive letters (also include apostrophes), e.x It'
+    normal_word = r"(?:\w[\w']+)"
+    # 2+ consecutive punctuations, e.x. :)
+    ascii_art = r"(?:[{punctuation}][{punctuation}]+)".format(punctuation=string.punctuation)
+    # a single character that is not alpha_numeric or other ascii printable
+    emoji = r"(?:[^\s])(?<![\w{ascii_printable}])".format(ascii_printable=string.printable)
+    regexp = r"{normal_word}|{ascii_art}|{emoji}".format(normal_word=normal_word, ascii_art=ascii_art,
+                                                         emoji=emoji)
 
-    wordcloud = WordCloud(background_color="white", mask=twitter_mask, width=width, height=height, stopwords=stopwords)
+    wordcloud = WordCloud(background_color="white", mask=twitter_mask, width=width, height=height, stopwords=stopwords,
+                          font_path="Symbola.ttf", regexp=regexp)
 
     wordcloud.generate_from_frequencies(frequency_list)
 
@@ -48,7 +58,7 @@ def make_clouds(setting_data, dbms):
             print_cloud(words, "words_" + emotion, 1000, 1000)
             print("Generata word cloud delle parole per l'emozione " + emotion)
 
-        #hashtag
+        # hashtag
         col = db.HashtagCount
         emotion_list = []
         for document in col.find({}):
@@ -66,7 +76,7 @@ def make_clouds(setting_data, dbms):
             print_cloud(hashtags, "hashtags_" + emotion["Emotion"], 1000, 1000)
             print("Generata word cloud degli hashtag per l'emozione " + emotion["Emotion"])
 
-        #emoticons
+        # emoticons
         col = db.EmoticonCount
         emotion_list = []
         for document in col.find({}):
@@ -206,7 +216,9 @@ def stats(setting_data, dbms):
             for word in new_word:
                 if word[1] > threshold_to_consider_a_word_frequent:
                     frequent += 1
-            print("Di queste", frequent, "sono particolarmente frequenti poichè occorrono più di", threshold_to_consider_a_word_frequent, "volte\n")
+            print("Di queste", frequent, "sono particolarmente frequenti poichè occorrono più di",
+                  threshold_to_consider_a_word_frequent, "volte\n")
+
 
 def ddict():
     return defaultdict(ddict)
