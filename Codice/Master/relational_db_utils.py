@@ -58,8 +58,6 @@ def load_tweet(conn, cursor):
     sql_insert = "insert into Tweet(Text, Emotion) VALUES (?, ?)"
     tweets = ri.load_tweet()
 
-    print('Inserting tweets...')
-
     n_tweets = len(tweets)
     batch_size = 120000 # se questo valore è troppo grande si rischia di far andare in errore l'inserimento
     curr_number = 0

@@ -20,26 +20,35 @@ def print_cloud(frequency_list, path, width, height):
 
 def make_clouds(setting_data, dbms):
     if dbms == 1:
+
         mongos_data = setting_data
         client_master = pymongo.MongoClient(mongos_data["Address"], mongos_data["Port"])
         db = client_master['TwitterEmotions']
         col = db.WordCount
-        emotion_list = []
+
+        emotion_list = {}
         for document in col.find({}):
-            emotion_list.append({"Emotion": document["_id"], "Words": document["values"]})
+            emotion = document["_id"]['Emotion']
+
+            if emotion not in emotion_list:
+                emotion_list[emotion] = []
+
+            emotion_list[emotion].append(document)
+
         for emotion in emotion_list:
             words = {}
             total = 0
-            for word in emotion["Words"]:
-                if int(word['count']) >= 5:
-                    words.update({word['word']: int(word['count'])})
-                    total += int(word['count'])
+            for word in emotion_list[emotion]:
+                if int(word['Count']) >= 5:
+                    words.update({word['_id']['Word']: int(word['Count'])})
+                    total += int(word['Count'])
             for key in words:
                 words.update({key: int(words[key]) / total})
 
-            print_cloud(words, "words_" + emotion["Emotion"], 1000, 1000)
-            print("Generata word cloud delle parole per l'emozione " + emotion["Emotion"])
+            print_cloud(words, "words_" + emotion, 1000, 1000)
+            print("Generata word cloud delle parole per l'emozione " + emotion)
 
+        #hashtag
         col = db.HashtagCount
         emotion_list = []
         for document in col.find({}):
@@ -57,6 +66,7 @@ def make_clouds(setting_data, dbms):
             print_cloud(hashtags, "hashtags_" + emotion["Emotion"], 1000, 1000)
             print("Generata word cloud degli hashtag per l'emozione " + emotion["Emotion"])
 
+        #emoticons
         col = db.EmoticonCount
         emotion_list = []
         for document in col.find({}):
