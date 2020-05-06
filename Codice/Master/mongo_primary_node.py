@@ -89,7 +89,9 @@ def secondary_node_call(Address, ServicePort):
         "id": 0,
     }
 
-    response = requests.post(url, json=payload).json()
+    print("Chiamando il servizio con url:", url)
+    response = requests.post(url, json=payload,timeout=15*60).json()
+
 
     if "result" not in response or response["result"] != "ok":
         print("Errore dal nodo con url:",url)

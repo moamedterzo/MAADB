@@ -25,7 +25,7 @@ def preprocess_tweets(s):
     return "ok"
 
 
-def start_secondary_node(service_port, db_address, db_port, service_address="0.0.0.0"):
+def start_secondary_node(service_port, db_address, db_port, service_binding="0.0.0.0"):
 
     global DBPort
     DBPort = db_port
@@ -33,4 +33,4 @@ def start_secondary_node(service_port, db_address, db_port, service_address="0.0
     global DBAddress
     DBAddress = db_address
 
-    run_simple(service_address, service_port, main_application)
+    run_simple(service_binding, service_port, main_application)
