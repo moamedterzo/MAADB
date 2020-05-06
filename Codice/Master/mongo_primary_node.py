@@ -91,7 +91,11 @@ def secondary_node_call(Address, ServicePort):
 
     print("Chiamando il servizio con url:", url)
     response = requests.post(url, json=payload,timeout=15*60).json()
+    f = open("ok_dagli_shard.txt", "a")
+    f.write("OK dal nodo con url:" + str(url))
+    f.close()
 
+    print("Elaborazione degli shard terminata con successo")
 
     if "result" not in response or response["result"] != "ok":
         print("Errore dal nodo con url:",url)
