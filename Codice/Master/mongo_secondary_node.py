@@ -19,7 +19,9 @@ def main_application(request):
 
 def preprocess_tweets(s):
 
+    print("Start to preprocess all shard tweets...")
     mu.preprocess_all_tweets(DBAddress, DBPort)
+    print("Preprocess finished!")
     return "ok"
 
 

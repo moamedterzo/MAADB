@@ -1,10 +1,11 @@
 import pymongo, json
 import tweet_processing as tp
 import resource_initializer as ri
+import threading
 
 PATH_SETTING_FILE = ""
 
-def preprocess_all_tweets(ShardAddress, ShardPort):
+def preprocess_all_tweets(ShardAddress, ShardPort, number_of_threads = 2):
 
     #get mongos data
     with open(PATH_SETTING_FILE) as json_file:
@@ -24,25 +25,52 @@ def preprocess_all_tweets(ShardAddress, ShardPort):
     col = client_shard["TwitterEmotions"].Tweet
     tweet_list = findTweet(col)
 
+    #start preprocessing in multi-thread
+    threads = []
+    for i in range(number_of_threads):
+
+        start = int((len(tweet_list) * i / number_of_threads) + 1)
+        end = int(len(tweet_list) * (i + 1) / number_of_threads)
+
+        if i == 0:
+            thread_tweet_list = tweet_list[:end]
+        elif i == number_of_threads - 1:
+            thread_tweet_list= tweet_list[start:]
+        else:
+            thread_tweet_list = tweet_list[start:end]
+
+        threads.append(threading.Thread(target=preprocess_tweets_thread,
+                                        args=(col, i + 1, thread_tweet_list, emoticon_list, slang_dict, stop_word_list)
+                                        ))
+
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+
+
+def preprocess_tweets_thread(col, thread_number, tweet_list, emoticon_list, slang_dict, stop_word_list):
     count = 0
 
-    #process each tweet
+    # process each tweet
     bulk = col.initialize_unordered_bulk_op()
 
     for tweet in tweet_list:
         words, emoticons, hashtags = tp.process_tweet(tweet[0], emoticon_list, slang_dict, stop_word_list)
 
         bulk.find({'_id': tweet[2]}).update({'$set': {
-             "Words": words, "Emoticon": emoticons, "Hashtag": hashtags}})
+            "Words": words, "Emoticon": emoticons, "Hashtag": hashtags}})
 
-        count = count + 1
+        count += 1
         if (count % 10000) == 0:
             bulk.execute()
             bulk = col.initialize_unordered_bulk_op()
-            print("Processati " + str(count) + "/" + str(len(tweet_list)))
+            print("Processed (thread number: ", thread_number, ")", str(count) + "/" + str(len(tweet_list)))
 
-    if (count % 10000) != 0:
+    if count % 10000 != 0:
         bulk.execute()
+
+
 
 
 def findStopWord(db):
@@ -179,7 +207,7 @@ def load_tweet(db):
 
         count += 1
 
-    if count % 80000 == 0:
+    if count % 80000 != 0:
         col.insert_many(tweets, ordered=False)
 
 
@@ -195,10 +223,6 @@ def load_resources(db):
 
         word_counts.append({"_id" : {"Emotion" : emotion, 'Word': row[1] }, 'Count': 0, "FlagEmoSN": row[2],
                       "FlagNRC": row[3], "FlagSentisense": row[4]})
-
-    #documents = []
-    #for key in word_counts:
-    #    documents.append({"Emotion": key, "Words": word_counts[key]})
 
     col.insert_many(word_counts)
 

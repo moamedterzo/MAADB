@@ -29,7 +29,6 @@ def preprocessing(setting_data):
 
     for t in threads:
         t.start()
-
     for t in threads:
         t.join()
 
@@ -45,7 +44,6 @@ def map_reduce(setting_data):
         {"$unwind": "$Words"},
         {"$group": {"_id": {"Emotion": "$Emotion", "Word": "$Words"}, "Count": {"$sum": 1}}}
     ]
-
 
     bulk_requests = []
     for word_count in list(db.Tweet.aggregate(pipeline, allowDiskUse=True)):
@@ -77,6 +75,7 @@ def map_reduce(setting_data):
 
 def primary_node_call(Address, DBPort):
     mu.preprocess_all_tweets(Address, DBPort)
+    print("Preprocess on primary shard finished!")
 
 
 def secondary_node_call(Address, ServicePort):
@@ -93,7 +92,9 @@ def secondary_node_call(Address, ServicePort):
     response = requests.post(url, json=payload).json()
 
     if "result" not in response or response["result"] != "ok":
-        print("Errore dal nodo con porta: " + str(ServicePort))
+        print("Errore dal nodo con url:",url)
         print(response)
+    else:
+        print("OK dal nodo con url:",url)
 
 
