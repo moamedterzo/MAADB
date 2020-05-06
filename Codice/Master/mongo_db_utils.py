@@ -5,7 +5,9 @@ import threading
 
 PATH_SETTING_FILE = ""
 
-def preprocess_all_tweets(ShardAddress, ShardPort, number_of_threads = 2):
+running_threads_preprocessing_tweets = 0
+
+def preprocess_all_tweets(ShardAddress, ShardPort, number_of_threads = 2, wait_for_threads = True):
 
     #get mongos data
     with open(PATH_SETTING_FILE) as json_file:
@@ -43,10 +45,17 @@ def preprocess_all_tweets(ShardAddress, ShardPort, number_of_threads = 2):
                                         args=(col, i + 1, thread_tweet_list, emoticon_list, slang_dict, stop_word_list)
                                         ))
 
+    #start all threads
+    global running_threads_preprocessing_tweets
+    running_threads_preprocessing_tweets = number_of_threads
+
     for t in threads:
         t.start()
-    for t in threads:
-        t.join()
+
+    #wait all threads to finish if true
+    if wait_for_threads:
+        for t in threads:
+            t.join()
 
 
 def preprocess_tweets_thread(col, thread_number, tweet_list, emoticon_list, slang_dict, stop_word_list):
@@ -70,6 +79,11 @@ def preprocess_tweets_thread(col, thread_number, tweet_list, emoticon_list, slan
     if count % 10000 != 0:
         bulk.execute()
 
+    #give a message
+    global running_threads_preprocessing_tweets
+    print("Finished thread number: ", thread_number, ")")
+    running_threads_preprocessing_tweets -= 1
+    print("Eemaining running threads:", running_threads_preprocessing_tweets)
 
 
 

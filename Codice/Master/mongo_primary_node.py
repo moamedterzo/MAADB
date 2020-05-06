@@ -1,8 +1,10 @@
 import requests
 import mongo_db_utils as mu
 import threading
+from time import sleep
 import pymongo
 from pymongo import UpdateOne
+
 
 def run_twitter_analisys(setting_data):
 
@@ -21,14 +23,14 @@ def preprocessing(setting_data):
         threads.append(threading.Thread(target=secondary_node_call,
                                         args=(secondary_setting_data['ServiceAddress'],
                                               secondary_setting_data['ServicePort'])))
+        threads[-1].start()
 
     primary_setting_data = setting_data['MongoDB']['PrimaryNode']
     threads.append(threading.Thread(target=primary_node_call,
                                     args=(primary_setting_data['Address'],
                                           primary_setting_data['DBPort'])))
+    threads[-1].start()
 
-    for t in threads:
-        t.start()
     for t in threads:
         t.join()
 
@@ -90,10 +92,17 @@ def secondary_node_call(Address, ServicePort):
     }
 
     print("Chiamando il servizio con url:", url)
-    response = requests.post(url, json=payload,timeout=15*60).json()
-    f = open("ok_dagli_shard.txt", "a")
-    f.write("OK dal nodo con url:" + str(url))
-    f.close()
+
+    response = requests.post(url, json=payload).json()
+
+    while "result" in response or response["result"] == "wait":
+        print("Awaiting for response:", url)
+        sleep(10)
+        response = requests.post(url, json=payload).json()
+
+    #f = open("ok_dagli_shard.txt", "a")
+    #f.write("OK dal nodo con url:" + str(url))
+    #f.close()
 
     print("Elaborazione degli shard terminata con successo")
 
