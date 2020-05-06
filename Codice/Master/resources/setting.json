@@ -9,8 +9,6 @@
 	},
 	"MongoDB" :
 	{
-		"Username" : "sa",
-		"Password" : "maadb2020",
 		"Mongos_client" :
 		{
 			"Address" : "localhost",

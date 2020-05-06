@@ -1,0 +1,75 @@
+IMPORTANTE I FIREWALL
+
+sc.exe create MongoDBClusterConfigServer binPath= "\"C:\Program Files\MongoDB\Server\4.2\bin\mongod.exe\" --service --config=\"C:\Program Files\MongoDB\Server\4.2\bin\cluster_mongod_twitter_config_server.cfg\"" DisplayName= "MongoDBClusterConfigServer" start= "auto"
+sc.exe create MongoDBClusterShard1 binPath= "\"C:\Program Files\MongoDB\Server\4.2\bin\mongod.exe\" --service --config=\"C:\Program Files\MongoDB\Server\4.2\bin\cluster_mongod_twitter_shard_server1.cfg\"" DisplayName= "MongoDBClusterShard1" start= "auto"
+sc.exe create MongoDBClusterRouter binPath= "\"C:\Program Files\MongoDB\Server\4.2\bin\mongos.exe\" --service --config=\"C:\Program Files\MongoDB\Server\4.2\bin\cluster_mongos_twitter.cfg\"" DisplayName= "MongoDBClusterRouter" start= "auto"
+
+sc.exe create MongoDBClusterShard2 binPath= "\"C:\Program Files\MongoDB\Server\4.2\bin\mongod.exe\" --service --config=\"C:\Program Files\MongoDB\Server\4.2\bin\cluster_mongod_twitter_shard_server2.cfg\"" DisplayName= "MongoDBClusterShard2" start= "auto"
+sc.exe create MongoDBClusterShard3 binPath= "\"C:\Program Files\MongoDB\Server\4.2\bin\mongod.exe\" --service --config=\"C:\Program Files\MongoDB\Server\4.2\bin\cluster_mongod_twitter_shard_server3.cfg\"" DisplayName= "MongoDBClusterShard3" start= "auto"
+
+
+
+
+mongo --host localhost --port 27218
+rs.initiate(
+  {
+    _id: "TwitterConfigServer",
+    configsvr: true,
+    members: [
+      { _id : 0, host : "79.26.37.106:27218" }
+    ]
+  }
+)
+
+mongo --host localhost --port 27219
+rs.initiate(
+  {
+    _id: "TwitterShard1",
+    members: [
+      { _id : 0, host : "79.26.37.106:27219" }
+    ]
+  }
+)
+
+
+
+mongo --host localhost --port 27220
+rs.initiate(
+  {
+    _id: "TwitterShard2",
+    members: [
+      { _id : 0, host : "79.35.239.65:27220" }
+    ]
+  }
+)
+
+
+mongo --host localhost --port 27221
+rs.initiate(
+  {
+    _id: "TwitterShard3",
+    members: [
+      { _id : 0, host : "79.35.239.65:27221" }
+    ]
+  }
+)
+
+
+
+
+
+mongo --host localhost --port 27217
+
+
+sh.addShard("TwitterShard1/79.26.37.106:27219")
+sh.addShard("TwitterShard2/79.35.239.65:27220")
+sh.addShard("TwitterShard3/79.35.239.65:27221")
+
+sh.enableSharding("TwitterEmotions")
+db.adminCommand( { movePrimary: "TwitterEmotions", to: "TwitterShard1" } )
+sh.shardCollection("TwitterEmotions.Tweet", { _id : "hashed" })
+
+ 
+
+
+

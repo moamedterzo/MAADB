@@ -1,6 +1,7 @@
 import pymongo, json
 import tweet_processing as tp
 import resource_initializer as ri
+from pymongo import InsertOne
 
 
 def preprocess_all_tweets(ShardAddress, ShardPort):
@@ -90,9 +91,12 @@ def findTweet(col):
 
 
 
-def initialise_cluster(mongos_data, skip_tweets = True):
+def initialise_cluster(setting_data, skip_tweets = False):
 
-    client_master = pymongo.MongoClient(mongos_data["Address"], mongos_data["Port"])
+    mongos_data = setting_data["Mongos_client"]
+
+    client_master = pymongo.MongoClient(mongos_data["Address"],
+                                        mongos_data["Port"])
     db = client_master["TwitterEmotions"]
 
     print('Inserting neg words')
@@ -155,14 +159,28 @@ def load_negative_word(db):
 
 
 def load_tweet(db):
+
+    col = db.Tweet
+    col.delete_many({})
+    print("tweets cancelled, begin to insert...")
+
     tweets = []
+
+    count = 1
 
     for tweet in ri.load_tweet():
         tweets.append({"Text": tweet[0], "Emotion": tweet[1]})
 
-    col = db.Tweet
-    col.delete_many({})
-    col.insert_many(tweets)
+        if count % 80000 == 0:
+            col.insert_many(tweets, ordered=False)
+            tweets = []
+
+            print("Number of tweets inserted:", count)
+
+        count += 1
+
+    if count % 80000 == 0:
+        col.insert_many(tweets, ordered=False)
 
 
 def load_resources(db):

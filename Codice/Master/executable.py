@@ -15,74 +15,84 @@ def show_time(sec):
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser()
+    try:
 
-    parser.add_argument('--database-type', help='Type of database: M = mongoDB, S = SqlServer')
-    parser.add_argument('--mongodb-nodetype', help='Type of node: P = primary, S = secondary')
-    parser.add_argument('--mongodb-secondary-index', help='Secondary node index')
+        parser = argparse.ArgumentParser()
 
-    args = parser.parse_args()
+        parser.add_argument('--database-type', help='Type of database: M = mongoDB, S = SqlServer')
+        parser.add_argument('--mongodb-nodetype', help='Type of node: P = primary, S = secondary')
+        parser.add_argument('--mongodb-secondary-index', help='Secondary node index')
+        parser.add_argument('--setting-file', help='Path of the setting file', default='resources/setting.json')
 
-    # lettura file setting
-    with open('resources/setting.json') as json_file:
-        setting_data = json.load(json_file)
+        args = parser.parse_args()
 
-    if args.database_type == "S" or (args.database_type == "M" and args.mongodb_nodetype == "P"):
+        # lettura file setting
+        with open(args.setting_file) as json_file:
+            setting_data = json.load(json_file)
 
-        # primary node
-        selectedOperation = ""
-        while selectedOperation != "-1":
-            print("\nSelect operation to do:")
-            print("\t1 to initialize database")
-            print("\t2 to run Tweets analisys")
-            print("\t3 to create word cloud")
-            print("\t4 to show dictionary stats")
-            print("\t-1 to exit")
+        if args.database_type == "S" or (args.database_type == "M" and args.mongodb_nodetype == "P"):
 
-            selectedOperation = input()
+            # primary node
+            selectedOperation = ""
+            while selectedOperation != "-1":
+                print("\nSelect operation to do:")
+                print("\t1 to initialize database")
+                print("\t2 to run Tweets analisys")
+                print("\t3 to create word cloud")
+                print("\t4 to show dictionary stats")
+                print("\t-1 to exit")
 
-            start_time = time.time()
+                selectedOperation = input()
 
-            # inizializzazione database
-            if selectedOperation == "1":
-                if args.database_type == "S":
-                    r_du.initialise_database(setting_data['MariaDB'])
-                elif args.database_type == "M":
-                    m_du.initialise_cluster(setting_data['MongoDB']["Mongos_client"])
+                start_time = time.time()
 
-                print('Initialization completed!')
+                # inizializzazione database
+                if selectedOperation == "1":
+                    if args.database_type == "S":
+                        r_du.initialise_database(setting_data['MariaDB'])
+                    elif args.database_type == "M":
+                        m_du.initialise_cluster(setting_data['MongoDB'])
 
-            # run twitter analisys
-            elif selectedOperation == "2":
-                if args.database_type == "S":
-                    r_du.run_twitter_analisys(setting_data['MariaDB'])
-                elif args.database_type == "M":
-                    m_pa.run_twitter_analisys(setting_data)
+                    print('Initialization completed!')
 
-            # show results
-            elif selectedOperation == "3":
-                if args.database_type == "S":
-                    cc.make_clouds(setting_data['MariaDB'], 0)
-                elif args.database_type == "M":
-                    cc.make_clouds(setting_data['MongoDB']["Mongos_client"], 1)
+                # run twitter analisys
+                elif selectedOperation == "2":
+                    if args.database_type == "S":
+                        r_du.run_twitter_analisys(setting_data['MariaDB'])
+                    elif args.database_type == "M":
+                        m_pa.run_twitter_analisys(setting_data)
 
-            elif selectedOperation == "4":
-                if args.database_type == "S":
-                    cc.stats(setting_data['MariaDB'], 0)
-                elif args.database_type == "M":
-                    cc.stats(setting_data['MongoDB']["Mongos_client"], 1)
+                # show results
+                elif selectedOperation == "3":
+                    if args.database_type == "S":
+                        cc.make_clouds(setting_data['MariaDB'], 0)
+                    elif args.database_type == "M":
+                        cc.make_clouds(setting_data['MongoDB']["Mongos_client"], 1)
 
-            end_time = time.time()
+                elif selectedOperation == "4":
+                    if args.database_type == "S":
+                        cc.stats(setting_data['MariaDB'], 0)
+                    elif args.database_type == "M":
+                        cc.stats(setting_data['MongoDB']["Mongos_client"], 1)
 
-            show_time(end_time - start_time)
+                end_time = time.time()
+
+                show_time(end_time - start_time)
 
 
-    # se sono secondary, avvio il servizio che rimane in ascolto di eventuali richieste
-    elif args.database_type == "M" and args.mongodb_nodetype == "S":
+        # se sono secondary, avvio il servizio che rimane in ascolto di eventuali richieste
+        elif args.database_type == "M" and args.mongodb_nodetype == "S":
 
-        secondary_index = int(args.mongodb_secondary_index)
-        secondary_setting_data = setting_data['MongoDB']['SecondaryNodes'][secondary_index]
+            secondary_index = int(args.mongodb_secondary_index)
+            secondary_setting_data = setting_data['MongoDB']['SecondaryNodes'][secondary_index]
 
-        m_sa.start_secondary_node(secondary_setting_data['ServicePort'],
-                                  secondary_setting_data['Address'],
-                                  secondary_setting_data['DBPort'])
+            m_sa.start_secondary_node(secondary_setting_data['ServicePort'],
+                                      secondary_setting_data['Address'],
+                                      secondary_setting_data['DBPort'])
+
+    except Exception as e:
+        print("An error has occourred:")
+        print(e)
+        print()
+
+    input("Press a key to exit...")

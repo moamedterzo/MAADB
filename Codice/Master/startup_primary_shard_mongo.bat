@@ -1,0 +1,1 @@
+START /b "" python executable.py --database-type=M --mongodb-nodetype=P --setting-file=resources/setting_cluster.json

@@ -1,0 +1,23 @@
+{
+	"MariaDB" :
+	{
+		"HostName" : "localhost",
+		"Port" : 3306,
+		"DatabaseName" : "TwitterEmotions",
+		"Username" : "root",
+		"Password" : "admin"
+	},
+	"MongoDB" :
+	{
+		"Mongos_client" :
+		{
+			"Address" : "79.26.37.106",
+			"Port" : 27217
+		},
+		"PrimaryNode" : {"Address" : "79.26.37.106", "DBPort" : 27219 },
+		"SecondaryNodes" : [
+			{"Address" : "79.35.239.65", "DBPort" : 27220, "ServicePort": 27222},
+			{"Address" : "79.35.239.65", "DBPort" : 27221, "ServicePort": 27223}
+		]
+	}
+}
