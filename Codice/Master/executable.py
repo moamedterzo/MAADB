@@ -88,7 +88,8 @@ if __name__ == "__main__":
 
             m_sa.start_secondary_node(secondary_setting_data['ServicePort'],
                                       secondary_setting_data['Address'],
-                                      secondary_setting_data['DBPort'])
+                                      secondary_setting_data['DBPort'],
+                                      secondary_setting_data['ServiceAddress'])
 
     except Exception as e:
         print("An error has occourred:")
