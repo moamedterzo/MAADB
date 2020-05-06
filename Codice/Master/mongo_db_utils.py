@@ -1,13 +1,13 @@
 import pymongo, json
 import tweet_processing as tp
 import resource_initializer as ri
-from pymongo import InsertOne
 
+PATH_SETTING_FILE = ""
 
 def preprocess_all_tweets(ShardAddress, ShardPort):
 
     #get mongos data
-    with open('resources/setting.json') as json_file:
+    with open(PATH_SETTING_FILE) as json_file:
         setting_data = json.load(json_file)
 
     # instantiate the mongos client

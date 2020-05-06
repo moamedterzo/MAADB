@@ -23,7 +23,7 @@ def preprocess_tweets(s):
     return "ok"
 
 
-def start_secondary_node(service_port, db_address, db_port, service_address = "localhost"):
+def start_secondary_node(service_port, db_address, db_port, service_address="0.0.0.0"):
 
     global DBPort
     DBPort = db_port

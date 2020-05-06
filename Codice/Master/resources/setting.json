@@ -16,8 +16,8 @@
 		},
 		"PrimaryNode" : {"Address" : "localhost", "DBPort" : 27019 },
 		"SecondaryNodes" : [
-			{"Address" : "localhost", "DBPort" : 27020, "ServicePort": 27120,"ServiceAddress":"localhost"},
-			{"Address" : "localhost", "DBPort" : 27021, "ServicePort": 27121,"ServiceAddress":"localhost"}
+			{"Address" : "localhost", "DBPort" : 27020, "ServicePort": 27120,"ServiceAddress":"0.0.0.0"},
+			{"Address" : "localhost", "DBPort" : 27021, "ServicePort": 27121,"ServiceAddress":"0.0.0.0"}
 		]
 	}
 }

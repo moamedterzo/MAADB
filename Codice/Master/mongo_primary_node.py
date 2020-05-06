@@ -19,7 +19,7 @@ def preprocessing(setting_data):
 
     for secondary_setting_data in setting_data['MongoDB']['SecondaryNodes']:
         threads.append(threading.Thread(target=secondary_node_call,
-                                        args=(secondary_setting_data['Address'],
+                                        args=(secondary_setting_data['ServiceAddress'],
                                               secondary_setting_data['ServicePort'])))
 
     primary_setting_data = setting_data['MongoDB']['PrimaryNode']

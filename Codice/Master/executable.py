@@ -27,6 +27,7 @@ if __name__ == "__main__":
         args = parser.parse_args()
 
         # lettura file setting
+        m_du.PATH_SETTING_FILE = args.setting_file
         with open(args.setting_file) as json_file:
             setting_data = json.load(json_file)
 
@@ -88,8 +89,7 @@ if __name__ == "__main__":
 
             m_sa.start_secondary_node(secondary_setting_data['ServicePort'],
                                       secondary_setting_data['Address'],
-                                      secondary_setting_data['DBPort'],
-                                      secondary_setting_data['ServiceAddress'])
+                                      secondary_setting_data['DBPort'])
 
     except Exception as e:
         print("An error has occourred:")
