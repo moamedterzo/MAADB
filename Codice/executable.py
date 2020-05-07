@@ -2,7 +2,7 @@ import json
 import argparse
 import time
 import relational_db_utils as r_du, mongo_db_utils as m_du
-import mongo_primary_node as m_pa, mongo_secondary_node as m_sa, create_clouds as cc
+import mongo_primary_node as m_pa, mongo_secondary_node as m_sa
 
 
 def main_code():

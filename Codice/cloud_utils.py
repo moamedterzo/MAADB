@@ -1,3 +1,4 @@
+from collections import defaultdict
 from wordcloud import WordCloud
 import numpy as np
 from PIL import Image
@@ -39,9 +40,6 @@ def make_clouds(words_count, hashtags_count, emojicons_count):
         # filtro quelle parole che compaiono in emozioni contrapposte
         filtered_emotions = check_word_emotions(words_count[word])
 
-        if len(filtered_emotions) != len(words_count[word]):
-            print(word)
-
         for emotion in filtered_emotions:
             if emotion not in word_hashtag_by_emo:
                 word_hashtag_by_emo[emotion] = {}
@@ -76,18 +74,19 @@ def make_clouds(words_count, hashtags_count, emojicons_count):
 
 
     # emoticons ed emoji
-    emojicons_result = {}
+    emojicons_result = defaultdict(dict)
     counts = {}
     for emojicon in emojicons_count:
         emotion = emojicon['Emotion']
+        count = emojicon['Count']
+        code = emojicon['Code']
+
         if emotion not in emojicons_count:
-            emojicons_result[emotion] = {}
             counts[emotion] = 0
 
-        count = emojicon['Count']
-
         counts[emotion] += count
-        emojicons_result[emotion][emojicon['Code']] = count
+
+        emojicons_result[emotion][code] = count
 
     # divisione per il totale e generazione
     for emotion in emojicons_result:
@@ -123,7 +122,7 @@ def check_word_emotions(word_emotions_count):
             count_contrary_emotion = word_emotions_count[contrary_emotion]
 
             # se il valore più basso è almeno il 20% del valore più alto, allora scarto le emozioni
-            if min(count_emotion,count_contrary_emotion) * 5 > max(count_emotion, count_contrary_emotion):
+            if min(count_emotion,count_contrary_emotion) * 2 > max(count_emotion, count_contrary_emotion):
                 result_emotions.remove(contrary_emotion)
                 continue
 
@@ -131,3 +130,5 @@ def check_word_emotions(word_emotions_count):
         result_emotions.append(emotion)
 
     return result_emotions
+
+
