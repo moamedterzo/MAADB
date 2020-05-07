@@ -194,7 +194,6 @@ def preprocess_all_tweets(conn):
         count += 1
         if count % 40000 == 0:
             print("Processed " + str(count) + "/" + str(len(tweet_list)))
-            break
 
     return result_word_count, result_hashtag_count,result_emojicon_count
 
@@ -386,7 +385,7 @@ def create_clouds(setting_data):
     # ottenimento conteggi parole, hashtag ed emoticons
 
     #raggruppamento dei conteggi per parola
-    cursor.execute("SELECT Emotion, Word, Count FROM wordcount")
+    cursor.execute("SELECT Emotion, Word, Count FROM wordcount where count > 0")
     word_count = {}
     for (emotion, word, count) in cursor:
         if word not in word_count:

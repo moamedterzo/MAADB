@@ -63,7 +63,7 @@ def main_code():
                 elif selected_operation == "2":
                     m_pa.run_twitter_analysis(mongo_db_setting)
                 elif selected_operation == "3":
-                    m_pa.create_clouds(mongo_db_setting)
+                    m_du.create_clouds(mongo_db_setting)
 
             # mostro il tempo trascorso per l'esecuzione del task
             end_time = time.time()

@@ -261,13 +261,16 @@ def create_clouds(setting_data):
     # raggruppamento dei conteggi per parola
     word_count = {}
     for count_row in db.WordCount.find({}):
+        count = count_row['Count']
+        if count == 0:
+            continue
 
         word = count_row['_id']['Word']
 
         if word not in word_count:
             word_count[word] = {}
 
-        word_count[word][count_row['_id']['Emotion']] = count_row['_id']['Count']
+        word_count[word][count_row['_id']['Emotion']] = count
 
     hashtag_count = []
     for emotion_count_row in db.HashtagCount.find({}):
