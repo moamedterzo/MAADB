@@ -4,8 +4,8 @@ import numpy as np
 from PIL import Image
 import string, math
 
-def print_cloud(frequency_list, path, width=1000, height=1000, flag_emoticons=False):
 
+def print_cloud(frequency_list, path, width=1000, height=1000, flag_emoticons=False):
     twitter_mask = np.array(Image.open("resources/twitter_logo.png"))
 
     # the regex used to detect words is a combination of normal words, ascii art, and emojis
@@ -30,27 +30,27 @@ def print_cloud(frequency_list, path, width=1000, height=1000, flag_emoticons=Fa
 
 
 def make_clouds(words_count, hashtags_count, emojicons_count):
-
+    stopwords = ["\u2665", "\u2764", "\u270B", "\u270C", "\u2661"]
     word_hashtag_by_emo = {}
     counts = {}
 
-    #parole (attenzione al raggruppamento)
+    # parole (attenzione al raggruppamento)
     for word in words_count:
+        if word not in stopwords:
+            # filtro quelle parole che compaiono in emozioni contrapposte
+            filtered_emotions = check_word_emotions(words_count[word])
 
-        # filtro quelle parole che compaiono in emozioni contrapposte
-        filtered_emotions = check_word_emotions(words_count[word])
+            for emotion in filtered_emotions:
+                if emotion not in word_hashtag_by_emo:
+                    word_hashtag_by_emo[emotion] = {}
+                    counts[emotion] = 0
 
-        for emotion in filtered_emotions:
-            if emotion not in word_hashtag_by_emo:
-                word_hashtag_by_emo[emotion] = {}
-                counts[emotion] = 0
+                count = words_count[word][emotion]
 
-            count = words_count[word][emotion]
+                counts[emotion] += count
+                word_hashtag_by_emo[emotion][word] = count
 
-            counts[emotion] += count
-            word_hashtag_by_emo[emotion][word] = count
-
-    #hashtag
+    # hashtag
     for hashtag in hashtags_count:
         emotion = hashtag['Emotion']
         if emotion not in word_hashtag_by_emo:
@@ -63,7 +63,6 @@ def make_clouds(words_count, hashtags_count, emojicons_count):
         counts[emotion] += count
         word_hashtag_by_emo[emotion][hashtag_label] = count
 
-
     # divisione per il totale e generazione
     for emotion in word_hashtag_by_emo:
         for occourrence in word_hashtag_by_emo[emotion]:
@@ -71,7 +70,6 @@ def make_clouds(words_count, hashtags_count, emojicons_count):
 
         print_cloud(word_hashtag_by_emo[emotion], "parole_hashtag_" + emotion)
         print("Generata word cloud delle parole e degli hashtag per l'emozione " + emotion)
-
 
     # emoticons ed emoji
     emojicons_result = defaultdict(dict)
@@ -98,19 +96,18 @@ def make_clouds(words_count, hashtags_count, emojicons_count):
 
 
 contrary_emotions = {
-"trust": "disgust",
-"disgust": "trust",
-"joy": "sadness",
-"sadness": "joy",
-"surprise": "anticipation",
-"anticipation": "surprise",
-"fear": "anger",
-"anger": "fear",
+    "trust": "disgust",
+    "disgust": "trust",
+    "joy": "sadness",
+    "sadness": "joy",
+    "surprise": "anticipation",
+    "anticipation": "surprise",
+    "fear": "anger",
+    "anger": "fear",
 }
 
 
 def check_word_emotions(word_emotions_count):
-
     result_emotions = []
 
     for emotion in word_emotions_count:
@@ -122,7 +119,7 @@ def check_word_emotions(word_emotions_count):
             count_contrary_emotion = word_emotions_count[contrary_emotion]
 
             # se il valore più basso è almeno il 20% del valore più alto, allora scarto le emozioni
-            if min(count_emotion,count_contrary_emotion) * 2 > max(count_emotion, count_contrary_emotion):
+            if min(count_emotion, count_contrary_emotion) * 2 > max(count_emotion, count_contrary_emotion):
                 result_emotions.remove(contrary_emotion)
                 continue
 
@@ -130,5 +127,3 @@ def check_word_emotions(word_emotions_count):
         result_emotions.append(emotion)
 
     return result_emotions
-
-
