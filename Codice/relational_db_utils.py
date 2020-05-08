@@ -407,14 +407,14 @@ def get_resources_stats(setting_data):
         emo_counts = word_counts[emotion]
 
         # percentuali parole conteggiate presenti anche nelle risorse (intersezione/tot conteggi)
-        perc_cont_sentisense ="n.d." if emo_counts[4] == 0 else  truncate_to_str(emo_counts[1] / emo_counts[7])
-        perc_cont_nrc = "n.d." if emo_counts[5] == 0 else truncate_to_str(emo_counts[2] / emo_counts[8])
-        perc_cont_emosn = "n.d." if emo_counts[6] == 0 else truncate_to_str(emo_counts[3] / emo_counts[9])
+        perc_cont_sentisense ="n.d." if emo_counts[4] == 0 else  truncate_to_str(emo_counts[1] * 100 / emo_counts[7])
+        perc_cont_nrc = "n.d." if emo_counts[5] == 0 else truncate_to_str(emo_counts[2]  * 100/ emo_counts[8])
+        perc_cont_emosn = "n.d." if emo_counts[6] == 0 else truncate_to_str(emo_counts[3] * 100 / emo_counts[9])
 
         # percentuali parole risorse presenti nei conteggi (intersezione/tot parole risorse)
-        perc_sentisense = "n.d." if emo_counts[4] == 0 else truncate_to_str(emo_counts[1] / emo_counts[4])
-        perc_nrc = "n.d." if emo_counts[5] == 0 else truncate_to_str(emo_counts[2] / emo_counts[5])
-        perc_emosn = "n.d." if emo_counts[6] == 0 else truncate_to_str(emo_counts[3] / emo_counts[6])
+        perc_sentisense = "n.d." if emo_counts[4] == 0 else truncate_to_str(emo_counts[1]  * 100/ emo_counts[4])
+        perc_nrc = "n.d." if emo_counts[5] == 0 else truncate_to_str(emo_counts[2] * 100 / emo_counts[5])
+        perc_emosn = "n.d." if emo_counts[6] == 0 else truncate_to_str(emo_counts[3] * 100 / emo_counts[6])
 
         print(emotion.ljust(12), '|      {} | {} | {} ||   {} | {} | {}  || {}'
             .format(perc_cont_sentisense.ljust(9), perc_cont_nrc.ljust(5), perc_cont_emosn.ljust(5),
@@ -422,7 +422,7 @@ def get_resources_stats(setting_data):
                     str(emo_counts[0])))
 
 
-def truncate_to_str(n, decimals=3):
+def truncate_to_str(n, decimals=1):
 
     if type(n) == str:
         return n
