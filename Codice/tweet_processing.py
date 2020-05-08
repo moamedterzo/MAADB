@@ -43,20 +43,6 @@ def substitute_contractions(line):
 
     return line
 
-
-def delete_stopwords(line, stop_word_list):
-    for stop_word in stop_word_list:
-        stop_word = " " + stop_word + " "
-
-        if line.startswith(stop_word[1::]):
-            line = line[len(stop_word[1::])::]
-        if stop_word in line:
-            line = line.replace(stop_word, " ")
-        if line.endswith(stop_word[1:-1]):
-            line = line[:-len(stop_word[::])]
-    return line
-
-
 def find_hashtags(line):
 
     hashtags = []

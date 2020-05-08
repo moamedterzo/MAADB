@@ -30,25 +30,23 @@ def print_cloud(frequency_list, path, width=1000, height=1000, flag_emoticons=Fa
 
 
 def make_clouds(words_count, hashtags_count, emojicons_count):
-    stopwords = ["\u2665", "\u2764", "\u270B", "\u270C", "\u2661"]
     word_hashtag_by_emo = {}
     counts = {}
 
     # parole (attenzione al raggruppamento)
     for word in words_count:
-        if word not in stopwords:
-            # filtro quelle parole che compaiono in emozioni contrapposte
-            filtered_emotions = check_word_emotions(words_count[word])
+        # filtro quelle parole che compaiono in emozioni contrapposte
+        filtered_emotions = check_word_emotions(words_count[word])
 
-            for emotion in filtered_emotions:
-                if emotion not in word_hashtag_by_emo:
-                    word_hashtag_by_emo[emotion] = {}
-                    counts[emotion] = 0
+        for emotion in filtered_emotions:
+            if emotion not in word_hashtag_by_emo:
+                word_hashtag_by_emo[emotion] = {}
+                counts[emotion] = 0
 
-                count = words_count[word][emotion]
+            count = words_count[word][emotion]
 
-                counts[emotion] += count
-                word_hashtag_by_emo[emotion][word] = count
+            counts[emotion] += count
+            word_hashtag_by_emo[emotion][word] = count
 
     # hashtag
     for hashtag in hashtags_count:
