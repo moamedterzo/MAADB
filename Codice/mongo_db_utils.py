@@ -260,6 +260,7 @@ def create_clouds(setting_data):
 
     # raggruppamento dei conteggi per parola
     word_count = {}
+
     for count_row in db.WordCount.find({}):
         count = count_row['Count']
         if count == 0:

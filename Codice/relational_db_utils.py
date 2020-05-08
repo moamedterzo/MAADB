@@ -1,8 +1,10 @@
+from collections import defaultdict
 import mariadb
 import resource_manager as ri
 import tweet_processing as tp
 import cloud_utils as cu
 
+threshold_frequent_word = 5
 
 def load_emojicon(conn, cursor):
     cursor.execute('delete from EmoticonCount')
@@ -310,67 +312,6 @@ def get_id_emojicon_from_code(code, cursor):
     for (ID,) in cursor:
         return ID
 
-#todo sistemare
-def get_resources_stats(setting_data):
-    conn = mariadb.connect(
-        user=setting_data['Username'],
-        password=setting_data['Password'],
-        host=setting_data['HostName'],
-        port=setting_data['Port'],
-        database=setting_data['DatabaseName'])
-
-    cursor = conn.cursor()
-    cursor.execute("SELECT Emotion, Word, Count, FlagSentisense, FlagNRC, FlagEmoSN FROM wordcount")
-
-    wordcount_documents = ddict()
-
-    for (Emotion, Word, Count, FlagSentisense, FlagNRC, FlagEmoSN) in cursor:
-        wordcount_documents[Emotion][Word] = {"Count": Count, "FlagSentisense": FlagSentisense, "FlagNRC": FlagNRC,
-                                              "FlagEmoSN": FlagEmoSN}
-
-    for emotion in wordcount_documents:
-        total_type_useful = {"FlagSentisense": 0, "FlagNRC": 0, "FlagEmoSN": 0}
-        total_type_unuseful = {"FlagSentisense": 0, "FlagNRC": 0, "FlagEmoSN": 0}
-        new_word = []
-        unuseful_words = []
-        threshold_to_consider_a_word_frequent = 20
-
-        for word in wordcount_documents[emotion]:
-            flag_Sentisense = wordcount_documents[emotion][word]["FlagSentisense"]
-            flag_NRC = wordcount_documents[emotion][word]["FlagNRC"]
-            flag_EmoSN = wordcount_documents[emotion][word]["FlagEmoSN"]
-            if wordcount_documents[emotion][word]["Count"] > 0:
-                if flag_Sentisense == 0 and flag_NRC == 0 and flag_EmoSN == 0:
-                    new_word.append(
-                        [wordcount_documents[emotion][word], wordcount_documents[emotion][word]["Count"]])
-                else:
-                    total_type_useful["FlagSentisense"] += flag_Sentisense
-                    total_type_useful["FlagNRC"] += flag_NRC
-                    total_type_useful["FlagEmoSN"] += flag_EmoSN
-            else:
-                unuseful_words.append(word)
-                total_type_unuseful["FlagSentisense"] += flag_Sentisense
-                total_type_unuseful["FlagNRC"] += flag_NRC
-                total_type_unuseful["FlagEmoSN"] += flag_EmoSN
-
-        print("Emozione " + emotion + "\n")
-        if total_type_useful["FlagSentisense"] + total_type_unuseful["FlagSentisense"] != 0:
-            print("Sentisense parole che hanno contribuito all'analisi dei tweet: ",
-                  total_type_useful["FlagSentisense"],
-                  "/", (total_type_useful["FlagSentisense"] + total_type_unuseful["FlagSentisense"]), "\n")
-        if total_type_useful["FlagNRC"] + total_type_unuseful["FlagNRC"]:
-            print("NRC parole che hanno contribuito all'analisi dei tweet: ", total_type_useful["FlagNRC"], "/",
-                  (total_type_useful["FlagNRC"] + total_type_unuseful["FlagNRC"]), "\n")
-        if total_type_useful["FlagEmoSN"] + total_type_unuseful["FlagEmoSN"]:
-            print("EmoSN parole che hanno contribuito all'analisi dei tweet: ", total_type_useful["FlagEmoSN"], "/",
-                  (total_type_useful["FlagEmoSN"] + total_type_unuseful["FlagEmoSN"]), "\n")
-        print("Son state inoltre trovate ", len(new_word), " parole che potrebbero arricchire il dizionario \n")
-        frequent = 0
-        for word in new_word:
-            if word[1] > threshold_to_consider_a_word_frequent:
-                frequent += 1
-        print("Di queste", frequent, "sono particolarmente frequenti poichè occorrono più di",
-              threshold_to_consider_a_word_frequent, "volte\n")
 
 def create_clouds(setting_data):
     conn = mariadb.connect(
@@ -405,6 +346,84 @@ def create_clouds(setting_data):
 
     cu.make_clouds(word_count, hashtag_count, emojicon_count)
 
+
+def get_resources_stats(setting_data):
+    conn = mariadb.connect(
+        user=setting_data['Username'],
+        password=setting_data['Password'],
+        host=setting_data['HostName'],
+        port=setting_data['Port'],
+        database=setting_data['DatabaseName'])
+
+    cursor = conn.cursor()
+
+    word_counts = defaultdict()
+
+    # ottengo numero totale di nuove parole conteggiate non presenti in ciascuna delle risorse
+    cursor.execute(
+        "SELECT Emotion, COUNT(*) FROM wordcount WHERE flagsentisense = 0 AND FlagNRC = 0 AND FlagEmoSN = 0 and COUNT > " + str(
+            threshold_frequent_word) + " GROUP BY emotion")
+    for (emotion, count) in cursor: word_counts[emotion] = [count]
+
+    # totale delle parole conteggiate presenti anche nelle risorse
+    cursor.execute("SELECT Emotion, sum(flagsentisense), SUM(flagNRC) , SUM(flagemosn)\
+                    FROM wordcount\
+                    WHERE COUNT > 0\
+                    GROUP BY emotion")
+
+    for (emotion, sentisense, nrc, emosn) in cursor:
+        word_counts[emotion].extend([sentisense, nrc, emosn])
+
+    # totale delle parole presenti nelle risorse
+    cursor.execute("SELECT Emotion, sum(flagsentisense), SUM(flagNRC) , SUM(flagemosn)\
+                    FROM wordcount\
+                    GROUP BY emotion")
+
+    for (emotion, sentisense, nrc, emosn) in cursor:
+        word_counts[emotion].extend([sentisense, nrc, emosn])
+
+    # totale delle parole conteggiate (il calcolo varia per ciascuna risorsa)
+    # seleziono il totale delle parole conteggiate non presenti nella risorsa, e le sommo a quelle conteggiate presenti nella risorsa
+    cursor.execute("SELECT Emotion, COUNT(*) FROM wordcount WHERE flagsentisense = 0 and COUNT >= "+ str(threshold_frequent_word) +" GROUP BY emotion")
+    for (emotion, res_count) in cursor: word_counts[emotion].append(res_count + word_counts[emotion][0])
+
+    cursor.execute("SELECT Emotion, COUNT(*) FROM wordcount WHERE FlagNRC = 0 and COUNT >= "+ str(threshold_frequent_word) +" GROUP BY emotion")
+    for (emotion, res_count) in cursor: word_counts[emotion].append(res_count + word_counts[emotion][1])
+
+    cursor.execute("SELECT Emotion, COUNT(*) FROM wordcount WHERE FlagEmoSN = 0 and COUNT >= "+ str(threshold_frequent_word) +" GROUP BY emotion")
+    for (emotion, res_count) in cursor: word_counts[emotion].append(res_count + word_counts[emotion][2])
+
+    # calcolo e stampa dei risultati
+    print("EMOTION      |   % TWEETS -> RESOURCES        || % RESOURCES-> TWEETS          || NEW WORDS")
+    print("             |     Sentisense |  NRC  | EmoSN ||   Sentisense |  NRC  | EmoSN")
+
+    for emotion in word_counts:
+
+        emo_counts = word_counts[emotion]
+
+        # percentuali parole conteggiate presenti anche nelle risorse (intersezione/tot conteggi)
+        perc_cont_sentisense = truncate_to_str(emo_counts[1] / emo_counts[7])
+        perc_cont_nrc = truncate_to_str(emo_counts[2] / emo_counts[8])
+        perc_cont_emosn = truncate_to_str(emo_counts[3] / emo_counts[9])
+
+        # percentuali parole risorse presenti nei conteggi (intersezione/tot parole risorse)
+        perc_sentisense = "n.d." if emo_counts[4] == 0 else truncate_to_str(emo_counts[1] / emo_counts[4])
+        perc_nrc = "n.d." if emo_counts[5] == 0 else truncate_to_str(emo_counts[2] / emo_counts[5])
+        perc_emosn = "n.d." if emo_counts[6] == 0 else truncate_to_str(emo_counts[3] / emo_counts[6])
+
+        print(emotion.ljust(12), '|      {} | {} | {} ||   {} | {} | {}  || {}'
+            .format(perc_cont_sentisense.ljust(9), perc_cont_nrc.ljust(5), perc_cont_emosn.ljust(5),
+                    perc_sentisense.ljust(10), perc_nrc.ljust(5), perc_emosn.ljust(5),
+                    str(emo_counts[0])))
+
+
+def truncate_to_str(n, decimals=3):
+
+    if type(n) == str:
+        return n
+    else:
+        multiplier = 10 ** decimals
+        return str(int(n * multiplier) / multiplier)
 
 
 
