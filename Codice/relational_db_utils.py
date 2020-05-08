@@ -1,10 +1,12 @@
 from collections import defaultdict
 import mariadb
+from matplotlib import pyplot as plt
 import resource_manager as ri
 import tweet_processing as tp
 import cloud_utils as cu
 
-threshold_frequent_word = 5
+threshold_frequent_word = 10
+
 
 def load_emojicon(conn, cursor):
     cursor.execute('delete from EmoticonCount')
@@ -82,7 +84,7 @@ def load_word_resources(conn, cursor):
     cursor.execute('delete from WordCount')
     conn.commit()
 
-    sql_insert = "insert into WordCount(Emotion, Word, Count, FlagSentisense, FlagNRC, FlagEmoSN) VALUES (?, ?, ?, ?, ?, ?)"
+    sql_insert = "insert into WordCount(Emotion, Word, Count, FlagEmoSN, FlagNRC, FlagSentisense) VALUES (?, ?, ?, ?, ?, ?)"
     cursor.executemany(sql_insert, ri.get_resources())
     conn.commit()
 
@@ -393,7 +395,10 @@ def get_resources_stats(setting_data):
     cursor.execute("SELECT Emotion, COUNT(*) FROM wordcount WHERE FlagEmoSN = 0 and COUNT >= "+ str(threshold_frequent_word) +" GROUP BY emotion")
     for (emotion, res_count) in cursor: word_counts[emotion].append(res_count + word_counts[emotion][2])
 
-    # calcolo e stampa dei risultati
+    # calcolo e stampa dei risultati4
+    print("\nShowing results for threshold=" + str(threshold_frequent_word))
+    print()
+
     print("EMOTION      |   % TWEETS -> RESOURCES        || % RESOURCES-> TWEETS          || NEW WORDS")
     print("             |     Sentisense |  NRC  | EmoSN ||   Sentisense |  NRC  | EmoSN")
 
@@ -402,9 +407,9 @@ def get_resources_stats(setting_data):
         emo_counts = word_counts[emotion]
 
         # percentuali parole conteggiate presenti anche nelle risorse (intersezione/tot conteggi)
-        perc_cont_sentisense = truncate_to_str(emo_counts[1] / emo_counts[7])
-        perc_cont_nrc = truncate_to_str(emo_counts[2] / emo_counts[8])
-        perc_cont_emosn = truncate_to_str(emo_counts[3] / emo_counts[9])
+        perc_cont_sentisense ="n.d." if emo_counts[4] == 0 else  truncate_to_str(emo_counts[1] / emo_counts[7])
+        perc_cont_nrc = "n.d." if emo_counts[5] == 0 else truncate_to_str(emo_counts[2] / emo_counts[8])
+        perc_cont_emosn = "n.d." if emo_counts[6] == 0 else truncate_to_str(emo_counts[3] / emo_counts[9])
 
         # percentuali parole risorse presenti nei conteggi (intersezione/tot parole risorse)
         perc_sentisense = "n.d." if emo_counts[4] == 0 else truncate_to_str(emo_counts[1] / emo_counts[4])
@@ -425,5 +430,36 @@ def truncate_to_str(n, decimals=3):
         multiplier = 10 ** decimals
         return str(int(n * multiplier) / multiplier)
 
+
+def plot_counts(setting_data):
+    conn = mariadb.connect(
+        user=setting_data['Username'],
+        password=setting_data['Password'],
+        host=setting_data['HostName'],
+        port=setting_data['Port'],
+        database=setting_data['DatabaseName'])
+
+    cursor = conn.cursor()
+
+    # ottenimento conteggi
+    cursor.execute("SELECT COUNT FROM wordcount ORDER BY COUNT")
+
+    x_vett = []
+    y_vett = []
+
+    count = 1
+
+    for value in cursor:
+        x_vett.append(count)
+        count += 1
+
+        y_vett.append(value)
+
+    # plot del grafico
+    plt.plot(x_vett, y_vett)
+    plt.xlabel("Words")
+    plt.ylabel("Count")
+    plt.semilogy()
+    plt.show()
 
 

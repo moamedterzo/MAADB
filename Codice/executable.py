@@ -33,6 +33,7 @@ def main_code():
 
             if args.database_type == "S":
                 print("\t4 to show resources stats")
+                print("\t5 to show words count plot")
 
             print("\t-1 to exit")
 
@@ -53,6 +54,8 @@ def main_code():
                     r_du.create_clouds(maria_db_setting)
                 elif selected_operation == "4":
                     r_du.get_resources_stats(maria_db_setting)
+                elif selected_operation == "5":
+                    r_du.plot_counts(maria_db_setting)
 
             elif args.database_type == "M":
                 # MongoDB
