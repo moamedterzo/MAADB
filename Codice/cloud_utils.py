@@ -2,7 +2,7 @@ from collections import defaultdict
 from wordcloud import WordCloud
 import numpy as np
 from PIL import Image
-import string, math
+import string
 
 
 def print_cloud(frequency_list, path, width=1000, height=1000, flag_emoticons=False):
