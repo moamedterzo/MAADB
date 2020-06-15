@@ -143,6 +143,7 @@ tag_dict = {"J": wordnet.ADJ,
             "V": wordnet.VERB,
             "R": wordnet.ADV}
 
+
 def lemmatize_tokens(tokens):
     """Implementa la lemmatizzazione dei tokens, considerando il PoS"""
     result = []
