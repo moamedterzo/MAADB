@@ -16,8 +16,8 @@
 		},
 		"PrimaryNode" : {"Address" : "79.26.37.106", "DBPort" : 27219 },
 		"SecondaryNodes" : [
-			{"Address" : "79.35.239.65", "DBPort" : 27220, "ServicePort": 27222,"ServiceAddress":"79.35.239.65"},
-			{"Address" : "79.35.239.65", "DBPort" : 27221, "ServicePort": 27223,"ServiceAddress":"79.35.239.65"}
+			{"Address" : "79.18.77.185", "DBPort" : 27220, "ServicePort": 27222,"ServiceAddress":"79.18.77.185"},
+			{"Address" : "79.18.77.185", "DBPort" : 27221, "ServicePort": 27223,"ServiceAddress":"79.18.77.185"}
 		]
 	}
 }
