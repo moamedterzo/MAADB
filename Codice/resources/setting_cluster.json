@@ -11,10 +11,10 @@
 	{
 		"Mongos_client" :
 		{
-			"Address" : "79.26.37.106",
+			"Address" : "87.7.4.163",
 			"Port" : 27217
 		},
-		"PrimaryNode" : {"Address" : "79.26.37.106", "DBPort" : 27219 },
+		"PrimaryNode" : {"Address" : "87.7.4.163", "DBPort" : 27219 },
 		"SecondaryNodes" : [
 			{"Address" : "79.18.77.185", "DBPort" : 27220, "ServicePort": 27222,"ServiceAddress":"79.18.77.185"},
 			{"Address" : "79.18.77.185", "DBPort" : 27221, "ServicePort": 27223,"ServiceAddress":"79.18.77.185"}

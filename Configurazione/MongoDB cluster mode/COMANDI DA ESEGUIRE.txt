@@ -9,6 +9,8 @@ sc.exe create MongoDBClusterShard3 binPath= "\"C:\Program Files\MongoDB\Server\4
 
 
 
+"C:\Program Files\MongoDB\Server\4.2\bin\mongos.exe" --config="C:\Program Files\MongoDB\Server\4.2\bin\cluster_mongos_twitter.cfg"
+
 
 mongo --host localhost --port 27218
 rs.initiate(
@@ -16,7 +18,7 @@ rs.initiate(
     _id: "TwitterConfigServer",
     configsvr: true,
     members: [
-      { _id : 0, host : "79.26.37.106:27218" }
+      { _id : 0, host : "87.7.4.163:27218" }
     ]
   }
 )
@@ -26,7 +28,7 @@ rs.initiate(
   {
     _id: "TwitterShard1",
     members: [
-      { _id : 0, host : "79.26.37.106:27219" }
+      { _id : 0, host : "87.7.4.163:27219" }
     ]
   }
 )
@@ -61,7 +63,7 @@ rs.initiate(
 mongo --host localhost --port 27217
 
 
-sh.addShard("TwitterShard1/79.26.37.106:27219")
+sh.addShard("TwitterShard1/87.7.4.163:27219")
 sh.addShard("TwitterShard2/79.18.77.185:27220")
 sh.addShard("TwitterShard3/79.18.77.185:27221")
 
