@@ -40,7 +40,7 @@ rs.initiate(
   {
     _id: "TwitterShard2",
     members: [
-      { _id : 0, host : "79.18.77.185:27220" }
+      { _id : 0, host : "79.32.76.137:27220" }
     ]
   }
 )
@@ -51,7 +51,7 @@ rs.initiate(
   {
     _id: "TwitterShard3",
     members: [
-      { _id : 0, host : "79.18.77.185:27221" }
+      { _id : 0, host : "79.32.76.137:27221" }
     ]
   }
 )
@@ -64,8 +64,8 @@ mongo --host localhost --port 27217
 
 
 sh.addShard("TwitterShard1/87.7.4.163:27219")
-sh.addShard("TwitterShard2/79.18.77.185:27220")
-sh.addShard("TwitterShard3/79.18.77.185:27221")
+sh.addShard("TwitterShard2/79.32.76.137:27220")
+sh.addShard("TwitterShard3/79.32.76.137:27221")
 
 sh.enableSharding("TwitterEmotions")
 db.adminCommand( { movePrimary: "TwitterEmotions", to: "TwitterShard1" } )
