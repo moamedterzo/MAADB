@@ -11,7 +11,7 @@
 	{
 		"Mongos_client" :
 		{
-			"Address" : "87.7.4.163",
+			"Address" : "87.17.62.46",
 			"Port" : 27217
 		},
 		"PrimaryNode" : {"Address" : "87.17.62.46", "DBPort" : 27219 },
